@@ -1,0 +1,5183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1a1a">
+<title>Relatório de Atendimento Sirona</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --paper: #fafaf7;
+    --paper-2: #f3f2ee;
+    --ink: #1a1a1a;
+    --ink-soft: #555;
+    --ink-faint: #999;
+    --line: #1a1a1a;
+    --line-soft: #c8c6c0;
+    --accent: #b91c1c;
+    --watermark: rgba(180, 30, 30, 0.04);
+    --shadow: rgba(0,0,0,1);
+  }
+
+  /* MODO ESCURO */
+  html[data-theme="dark"] {
+    --paper: #1a1a1a;
+    --paper-2: #2a2a2a;
+    --ink: #f0ede5;
+    --ink-soft: #aaa;
+    --ink-faint: #777;
+    --line: #f0ede5;
+    --line-soft: #444;
+    --accent: #e8654a;
+    --watermark: rgba(232, 101, 74, 0.04);
+    --shadow: rgba(240, 237, 229, 1);
+  }
+
+  html[data-theme="dark"] body {
+    background: #0f0f0f;
+  }
+  html[data-theme="dark"] .form-paper,
+  html[data-theme="dark"] .module-card,
+  html[data-theme="dark"] .home-cta,
+  html[data-theme="dark"] .home-secondary-btn,
+  html[data-theme="dark"] .atend-card,
+  html[data-theme="dark"] .menu-btn,
+  html[data-theme="dark"] .period-filter,
+  html[data-theme="dark"] .search-bar input,
+  html[data-theme="dark"] .quick-stat,
+  html[data-theme="dark"] .menu-item {
+    box-shadow: 3px 3px 0 var(--line-soft);
+  }
+  html[data-theme="dark"] .home-cta {
+    box-shadow: 5px 5px 0 var(--line-soft);
+  }
+  html[data-theme="dark"] .form-paper {
+    box-shadow: 4px 4px 0 var(--line-soft);
+  }
+  html[data-theme="dark"] .date-group-head,
+  html[data-theme="dark"] .section-bar {
+    background: var(--paper-2);
+    color: var(--ink);
+  }
+  html[data-theme="dark"] .period-filter-head {
+    background: var(--paper-2);
+    color: var(--ink);
+  }
+  html[data-theme="dark"] .period-opt.active,
+  html[data-theme="dark"] .method-card.active,
+  html[data-theme="dark"] .btn-primary,
+  html[data-theme="dark"] .btn-dark,
+  html[data-theme="dark"] .fab,
+  html[data-theme="dark"] .atend-os,
+  html[data-theme="dark"] .time-btn:not(.set) {
+    background: var(--paper-2);
+    color: var(--ink);
+    border-color: var(--line);
+  }
+  html[data-theme="dark"] .form-paper::after {
+    color: rgba(232, 101, 74, 0.06);
+  }
+  html[data-theme="dark"] .sig-area {
+    background: #f0ede5;
+  }
+  html[data-theme="dark"] .sig-area canvas {
+    background: #f0ede5;
+  }
+  html[data-theme="dark"] .sigpad-canvas-wrap {
+    background: #f0ede5;
+  }
+  html, body {
+    background: var(--paper-2);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+  body { min-height: 100vh; padding-bottom: 110px; }
+  .app { max-width: 480px; margin: 0 auto; padding: 16px; }
+
+  /* HOME */
+  .home-header {
+    text-align: center;
+    padding: 24px 0 32px;
+    border-bottom: 2px solid var(--line);
+    margin-bottom: 24px;
+  }
+
+  /* HOME CLEAN */
+  .home-clean {
+    text-align: center;
+    padding: 30px 0 20px;
+    min-height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+  .home-clean-title {
+    font-size: 36px;
+    font-weight: 300;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 14px 0 6px;
+    color: var(--ink);
+  }
+  .home-clean-title em {
+    font-style: normal;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .home-clean-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+  }
+  .home-cta {
+    background: var(--ink);
+    color: var(--paper);
+    border: 2px solid var(--line);
+    box-shadow: 6px 6px 0 var(--line);
+    padding: 28px 20px;
+    margin: 0 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.1s, box-shadow 0.15s;
+    font-family: inherit;
+  }
+  .home-cta:active {
+    transform: translate(3px,3px);
+    box-shadow: 3px 3px 0 var(--line);
+  }
+  .home-cta-plus {
+    font-size: 48px;
+    font-weight: 300;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .home-cta-label {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .home-cta-hint {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-top: 4px;
+  }
+  /* Variante Escritório - mesmo destaque, visual invertido */
+  .home-cta-escritorio {
+    background: var(--paper);
+    color: var(--ink);
+    margin-top: 12px;
+    padding: 22px 20px;
+  }
+  .home-cta-escritorio .home-cta-plus {
+    font-size: 38px;
+    color: var(--accent);
+  }
+  .home-cta-escritorio:active {
+    transform: translate(3px,3px);
+    box-shadow: 3px 3px 0 var(--line);
+  }
+  .home-quick-stats {
+    margin-top: 32px;
+    padding: 0 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  /* HOME SECONDARY BUTTONS */
+  .home-secondary {
+    margin-top: 18px;
+    padding: 0 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .home-secondary-btn {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    box-shadow: 3px 3px 0 var(--line);
+    padding: 14px 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+    transition: transform 0.1s, box-shadow 0.15s;
+  }
+  .home-secondary-btn:active {
+    transform: translate(2px,2px);
+    box-shadow: 1px 1px 0 var(--line);
+  }
+  .home-secondary-btn.full { grid-column: 1 / -1; }
+  .home-secondary-btn .hsb-icon { font-size: 22px; line-height: 1; }
+  .home-secondary-btn .hsb-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  .quick-stat {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    padding: 12px;
+    text-align: center;
+  }
+  .quick-stat .qs-val {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .quick-stat .qs-lab {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-soft);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* MENU BUTTON (hamburger) */
+  .menu-btn {
+    position: absolute;
+    top: 12px;
+    right: 8px;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    width: 42px;
+    height: 42px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 2px 2px 0 var(--line);
+    z-index: 10;
+  }
+  .menu-btn:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--line); }
+  .menu-btn span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--ink);
+  }
+
+  /* DRAWER */
+  .menu-drawer-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 150;
+    display: none;
+  }
+  .menu-drawer-bg.active { display: block; animation: fadeIn 0.2s; }
+  .menu-drawer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 88%;
+    max-width: 340px;
+    height: 100%;
+    background: var(--paper);
+    border-left: 2px solid var(--line);
+    box-shadow: -5px 0 0 var(--line);
+    overflow-y: auto;
+    animation: slideLeft 0.3s cubic-bezier(0.2,0.8,0.2,1);
+  }
+  @keyframes slideLeft { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  .menu-drawer-head {
+    padding: 16px 18px;
+    border-bottom: 2px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .menu-brand {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .menu-drawer-body { padding: 18px; }
+  .menu-section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed var(--line-soft);
+  }
+  .menu-item {
+    width: 100%;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    padding: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    box-shadow: 2px 2px 0 var(--line);
+    font-family: inherit;
+  }
+  .menu-item:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--line); background: var(--paper-2); }
+  .menu-icon {
+    font-size: 22px;
+    width: 28px;
+    text-align: center;
+  }
+  .menu-item-text { flex: 1; min-width: 0; }
+  .menu-item-title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .menu-item-desc {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    color: var(--ink-faint);
+    margin-top: 3px;
+    letter-spacing: 0.05em;
+  }
+  .home-brand {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .home-title { font-size: 24px; font-weight: 700; line-height: 1.1; }
+  .home-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+    letter-spacing: 0.05em;
+  }
+  .module-card {
+    background: var(--paper);
+    border: 2px solid var(--line);
+    margin-bottom: 14px;
+    padding: 20px;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.15s;
+    box-shadow: 4px 4px 0 var(--line);
+  }
+  .module-card:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--line); }
+  .module-card.disabled { opacity: 0.5; cursor: not-allowed; box-shadow: 4px 4px 0 var(--line-soft); }
+  .module-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .module-name { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .module-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
+  .module-footer {
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px dashed var(--line-soft);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .module-footer.soon { color: var(--ink-faint); }
+
+  /* TOPNAV */
+  .topnav { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .back-btn {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    padding: 8px 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .back-btn:active { background: var(--ink); color: var(--paper); }
+  .topnav-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-soft);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-left: auto;
+  }
+
+  /* LIST */
+  .list-head { text-align: center; padding: 12px 0 20px; border-bottom: 2px solid var(--line); margin-bottom: 18px; }
+  .list-head h2 { font-size: 22px; font-weight: 700; }
+  .list-head .count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+
+  /* SEARCH BAR */
+  .search-bar {
+    position: relative;
+    margin-bottom: 18px;
+  }
+  .search-bar input {
+    width: 100%;
+    padding: 12px 40px 12px 14px;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    box-shadow: 3px 3px 0 var(--line);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .search-bar input:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+  }
+  .search-bar input::placeholder {
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+  .search-clear {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    font-size: 13px;
+    display: none;
+    z-index: 2;
+  }
+  .search-clear.visible { display: flex; align-items: center; justify-content: center; }
+
+  /* PERIOD FILTER */
+  .period-filter {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    box-shadow: 3px 3px 0 var(--line);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .period-filter-head {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .period-filter-head .pf-current {
+    font-size: 9.5px;
+    opacity: 0.8;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: none;
+  }
+  .period-options {
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .period-opt {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    padding: 8px 6px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  .period-opt:active { background: var(--paper-2); }
+  .period-opt.active {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .period-opt.full { grid-column: 1 / -1; }
+  .period-custom-row {
+    border-top: 1.5px solid var(--line);
+    padding: 8px;
+    display: none;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .period-custom-row.active { display: grid; }
+  .period-custom-row label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+    font-weight: 600;
+    display: block;
+  }
+  .period-custom-row input {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* DATE GROUP HEADERS */
+  .date-group {
+    margin-bottom: 14px;
+  }
+  .date-group-head {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 8px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border: 1.5px solid var(--line);
+    box-shadow: 3px 3px 0 var(--line);
+  }
+  .date-group-head .date-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .date-group-head .date-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    opacity: 0.7;
+    letter-spacing: 0.1em;
+  }
+  .date-group-head .date-day {
+    font-size: 16px;
+    font-weight: 700;
+    margin-right: 8px;
+  }
+  .no-results {
+    text-align: center;
+    padding: 40px 16px;
+    color: var(--ink-faint);
+    font-size: 13px;
+    font-style: italic;
+  }
+  .no-results-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    opacity: 0.4;
+  }
+  .atend-card {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    margin-bottom: 12px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--line);
+    transition: transform 0.1s, box-shadow 0.15s;
+  }
+  .atend-card:active { transform: translate(1px,1px); box-shadow: 2px 2px 0 var(--line); }
+  .atend-card-top {
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .atend-cli { font-size: 16px; font-weight: 600; line-height: 1.2; }
+  .atend-os {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+  .atend-card-body {
+    padding: 10px 14px 12px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .atend-meta-item .lab {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8.5px;
+    color: var(--ink-faint);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .atend-meta-item .val { font-size: 13px; font-weight: 600; margin-top: 2px; }
+  .empty {
+    text-align: center;
+    padding: 50px 16px;
+    color: var(--ink-faint);
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  /* FORMULÁRIO */
+  .form-paper {
+    background: var(--paper);
+    border: 2px solid var(--line);
+    box-shadow: 5px 5px 0 var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+  .form-paper::after {
+    content: "SIRONA";
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%) rotate(-25deg);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 80px;
+    font-weight: 800;
+    color: var(--watermark);
+    letter-spacing: 0.1em;
+    pointer-events: none;
+    z-index: 0;
+    white-space: nowrap;
+  }
+  .form-content { position: relative; z-index: 1; }
+  .form-header { border-bottom: 2px solid var(--line); padding: 14px 14px 12px; text-align: center; }
+  .form-header .org {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+  }
+  .form-header h1 {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .field-table { border-collapse: collapse; width: 100%; }
+  .field-table tr { display: grid; grid-template-columns: 1fr; }
+  .field-table tr.row-2 { grid-template-columns: 2fr 1fr; }
+  .field-table td {
+    border-bottom: 1.5px solid var(--line);
+    border-right: 1.5px solid var(--line);
+    padding: 0;
+  }
+  .field-table td:last-child { border-right: none; }
+  .field-table td.no-bottom { border-bottom: none; }
+  .cell { padding: 6px 10px 8px; display: flex; flex-direction: column; }
+  .cell-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 2px;
+  }
+  .cell input, .cell select, .cell textarea {
+    border: none;
+    background: transparent;
+    width: 100%;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    resize: none;
+  }
+  /* Garante que inputs de hora/data funcionem corretamente no mobile */
+  .cell input[type="time"], .cell input[type="date"] {
+    -webkit-appearance: auto;
+    appearance: auto;
+    min-height: 24px;
+    cursor: pointer;
+  }
+  .cell input[type="time"]::-webkit-calendar-picker-indicator,
+  .cell input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0.4;
+    cursor: pointer;
+  }
+  .cell input:focus, .cell select:focus, .cell textarea:focus { outline: none; }
+  .cell input::placeholder { color: var(--ink-faint); font-style: italic; }
+
+  .section-bar {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 6px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .section-bar .bar-meta { font-size: 10px; opacity: 0.7; }
+
+  .time-cell { padding: 6px 10px 8px; }
+  .time-cell-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .time-row { display: flex; align-items: center; gap: 6px; }
+  .time-display {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    flex: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .time-display.empty { color: var(--ink-faint); }
+  .time-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed var(--line-soft);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    padding: 2px 0;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    min-width: 0;
+  }
+  .time-input:focus {
+    outline: none;
+    border-bottom: 1.5px solid var(--accent);
+  }
+  .time-input::-webkit-calendar-picker-indicator {
+    opacity: 0.4;
+    cursor: pointer;
+  }
+  .time-btn {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 6px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .time-btn:active { transform: scale(0.97); }
+  .time-btn.set { background: var(--paper); color: var(--ink); border: 1px solid var(--line); }
+
+  .despesa-row {
+    display: grid;
+    grid-template-columns: 70px 1fr 60px 70px;
+    border-bottom: 1.5px solid var(--line);
+    min-height: 56px;
+  }
+  .despesa-row > div {
+    padding: 8px;
+    border-right: 1.5px solid var(--line);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+  }
+  .despesa-row > div:last-child { border-right: none; }
+  .despesa-row.header { background: var(--paper-2); min-height: auto; }
+  .despesa-row.header > div {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    padding: 6px 4px;
+    font-weight: 600;
+    justify-content: center;
+    text-align: center;
+  }
+  .despesa-row .d-valor {
+    font-weight: 700;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    justify-content: flex-end;
+    padding-right: 8px;
+  }
+  .despesa-row .d-meio { font-size: 12px; line-height: 1.2; }
+  .despesa-row .d-comp { justify-content: center; cursor: pointer; padding: 4px; }
+  .despesa-row .d-comp img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border: 1px solid var(--line-soft);
+  }
+  .despesa-row .d-comp .icon { font-size: 18px; }
+  .despesa-row .d-obs { font-size: 11px; line-height: 1.2; color: var(--ink-soft); }
+  .despesa-row.empty-row {
+    grid-template-columns: 1fr;
+    color: var(--ink-faint);
+    font-style: italic;
+    font-size: 12px;
+    padding: 14px;
+    min-height: auto;
+  }
+  .despesa-row.empty-row > div { border-right: none; padding: 0; justify-content: center; }
+  .add-row {
+    text-align: center;
+    padding: 10px;
+    background: var(--paper);
+    border-bottom: 1.5px solid var(--line);
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .add-row:active { background: var(--paper-2); }
+
+  .form-footer { border-top: 2px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; }
+  .footer-cell { padding: 14px 12px; border-right: 1.5px solid var(--line); text-align: center; }
+  .footer-cell:last-child { border-right: none; }
+
+  /* SIGNATURES */
+  .signatures-block {
+    border-top: 2px solid var(--line);
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .sig-cell {
+    padding: 12px;
+    border-bottom: 1.5px solid var(--line);
+  }
+  .sig-cell:last-child { border-bottom: none; }
+  .sig-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .sig-head .lab {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+  .sig-status {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8.5px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .sig-status.signed { color: #2d6a3a; font-weight: 700; }
+  .sig-area {
+    border: 1.5px dashed var(--line-soft);
+    background: white;
+    height: 90px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .sig-area:active { background: var(--paper-2); }
+  .sig-area canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .sig-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+  .sig-area.has-signature .sig-placeholder { display: none; }
+  .sig-area.has-signature { border-style: solid; border-color: var(--line); }
+  .sig-meta {
+    margin-top: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.05em;
+  }
+
+  /* SIGNATURE PAD MODAL */
+  .sigpad-modal {
+    background: var(--paper);
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    border-top: 2px solid var(--line);
+  }
+  .sigpad-canvas-wrap {
+    background: white;
+    border: 2px solid var(--line);
+    margin: 18px;
+    height: 280px;
+    position: relative;
+    touch-action: none;
+  }
+  .sigpad-canvas-wrap canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+  }
+  .sigpad-hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+  .sigpad-canvas-wrap.has-stroke .sigpad-hint { display: none; }
+  .sigpad-actions {
+    padding: 0 18px 18px;
+    display: grid;
+    gap: 8px;
+  }
+  .footer-cell .lab {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .footer-cell .val {
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 4px;
+    border-bottom: 1px dashed var(--line-soft);
+    min-height: 20px;
+    padding-bottom: 4px;
+  }
+  .form-footer-row { display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: 1.5px solid var(--line); }
+  .form-footer-row .footer-cell .lab { font-size: 8px; }
+
+  .actions { display: grid; gap: 10px; margin-top: 18px; }
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid var(--line);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .btn:active { transform: scale(0.99); }
+  .btn-primary { background: var(--ink); color: var(--paper); }
+  .btn-secondary { background: var(--paper); color: var(--ink); }
+  .btn-danger { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+
+  .fab {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 448px;
+    background: var(--ink);
+    color: var(--paper);
+    border: 2px solid var(--line);
+    padding: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--line);
+    z-index: 50;
+  }
+  .fab:active { transform: translateX(-50%) scale(0.98); }
+
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    display: none;
+    align-items: flex-end;
+  }
+  .modal-bg.active { display: flex; animation: fadeIn 0.2s; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal {
+    background: var(--paper);
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    max-height: 92vh;
+    overflow-y: auto;
+    border-top: 2px solid var(--line);
+    animation: slideUp 0.3s cubic-bezier(0.2,0.8,0.2,1);
+  }
+  .modal-head {
+    padding: 14px 18px;
+    border-bottom: 2px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    background: var(--paper);
+    z-index: 5;
+  }
+  .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .close-btn {
+    background: transparent;
+    border: 1.5px solid var(--line);
+    width: 32px; height: 32px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .modal-body { padding: 18px; }
+
+  .method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 16px; }
+  .method-card {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    padding: 12px 6px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--line);
+  }
+  .method-card:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--line); }
+  .method-card.active { background: var(--ink); color: var(--paper); }
+  .method-icon { font-size: 20px; display: block; margin-bottom: 3px; }
+  .method-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .preview-box {
+    border: 1.5px dashed var(--line);
+    padding: 12px;
+    text-align: center;
+    background: var(--paper-2);
+    margin-bottom: 14px;
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .preview-box img { max-width: 100%; max-height: 180px; border: 1px solid var(--line); }
+  .preview-box .ph-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .modal-field { margin-bottom: 12px; }
+  .modal-field label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .modal-field input, .modal-field select, .modal-field textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .modal-field input:focus, .modal-field select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .modal-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  input[type="file"] { display: none; }
+
+  .viewer {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .viewer.active { display: flex; }
+  .viewer img { max-width: 100%; max-height: 100%; }
+  .viewer-close {
+    position: absolute; top: 20px; right: 20px;
+    background: transparent;
+    border: 1.5px solid white;
+    color: white;
+    width: 40px; height: 40px;
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 10px 18px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    z-index: 300;
+    box-shadow: 3px 3px 0 var(--accent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    font-weight: 700;
+  }
+  .toast.show { opacity: 1; }
+  .hidden { display: none !important; }
+
+  /* CATEGORIAS */
+  .cat-bullet {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    flex-shrink: 0;
+  }
+  .cat-bullet.small { width: 10px; height: 10px; border-width: 1px; }
+  .cat-color-swatch {
+    width: 100%;
+    aspect-ratio: 1;
+    border: 2px solid var(--line);
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--line);
+    transition: transform 0.1s;
+  }
+  .cat-color-swatch:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--line); }
+  .cat-color-swatch.active { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .cat-item {
+    padding: 12px;
+    border-bottom: 1px solid var(--line-soft);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+    cursor: pointer;
+  }
+  .cat-item:active { background: var(--paper-2); }
+  .cat-item:last-child { border-bottom: none; }
+  .cat-item-name { font-weight: 600; font-size: 14px; }
+  .cat-item-info {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .cat-item-arrow { color: var(--ink-faint); font-size: 18px; }
+
+  /* DASHBOARD CARDS */
+  .dash-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 12px;
+  }
+  .dash-card {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    padding: 12px;
+    box-shadow: 2px 2px 0 var(--line);
+  }
+  .dash-card.wide { grid-column: 1/-1; }
+  .dash-card-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .dash-card-value {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .dash-card-sub {
+    font-size: 10px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .dash-card.alert {
+    background: rgba(232, 101, 74, 0.05);
+    border-color: var(--accent);
+  }
+  .dash-card.alert .dash-card-value { color: var(--accent); }
+
+  /* RANKING POR TÉCNICO */
+  .rank-row {
+    padding: 10px 12px;
+    border-bottom: 1px dashed var(--line-soft);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+  }
+  .rank-row:last-child { border-bottom: none; }
+  .rank-name { font-size: 13px; font-weight: 600; }
+  .rank-stats {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+  .rank-value { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .rank-bar {
+    grid-column: 1/-1;
+    height: 6px;
+    background: var(--paper-2);
+    border: 1px solid var(--line-soft);
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .rank-bar-fill {
+    height: 100%;
+    background: var(--ink);
+    transition: width 0.4s;
+  }
+
+  /* CALENDÁRIO */
+  .cal-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--paper-2);
+    border-bottom: 1.5px solid var(--line);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .cal-nav {
+    background: none;
+    border: 1.5px solid var(--line);
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--line-soft);
+    padding: 1px;
+  }
+  .cal-weekday {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    text-align: center;
+    padding: 6px 2px;
+    background: var(--paper-2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .cal-day {
+    background: var(--paper);
+    aspect-ratio: 1;
+    padding: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    position: relative;
+    cursor: pointer;
+    min-height: 38px;
+  }
+  .cal-day.empty { background: var(--paper-2); cursor: default; }
+  .cal-day-num { font-weight: 600; font-size: 11px; }
+  .cal-day-marks {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    align-self: center;
+    margin-top: auto;
+  }
+  .cal-day-mark {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .cal-day.today .cal-day-num {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 1px 4px;
+  }
+  .cal-day.has-data { background: rgba(232, 101, 74, 0.08); }
+  .cal-day.has-data:active { background: rgba(232, 101, 74, 0.18); }
+  .cal-legend {
+    padding: 6px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-faint);
+    text-align: center;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* PENDÊNCIAS / FILTROS EXTRAS */
+  .extra-filter-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 8px 0;
+    -webkit-overflow-scrolling: touch;
+  }
+  .extra-filter-chip {
+    flex-shrink: 0;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    padding: 6px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .extra-filter-chip.active { background: var(--ink); color: var(--paper); }
+
+  /* BOTÃO IMPRIMIR no card */
+  .atend-card-print {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: 1px 1px 0 var(--line);
+    z-index: 2;
+  }
+  .atend-card-print:active { transform: translate(1px,1px); box-shadow: none; }
+  .atend-card { position: relative; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HOME -->
+  <div id="screenHome">
+    <button class="menu-btn" id="menuBtn" onclick="toggleMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <div class="home-clean">
+      <div class="home-brand" id="homeGreeting">— bem-vindo —</div>
+      <h1 class="home-clean-title">Relatório de<br><em>Atendimento</em></h1>
+      <div class="home-clean-sub" id="homeSub">—</div>
+
+      <button class="home-cta" onclick="newAtendimento()">
+        <span class="home-cta-plus">+</span>
+        <span class="home-cta-label">Novo Atendimento</span>
+        <span class="home-cta-hint">tocar para iniciar registro</span>
+      </button>
+
+      <button class="home-cta home-cta-escritorio" onclick="goCnf()">
+        <span class="home-cta-plus">⊟</span>
+        <span class="home-cta-label">Painel do Escritório</span>
+        <span class="home-cta-hint">visualizar e gerenciar atendimentos</span>
+      </button>
+
+      <div class="home-secondary">
+        <button class="home-secondary-btn" onclick="goAtendimentos()">
+          <span class="hsb-icon">⚒</span>
+          <span class="hsb-label">Atendimentos</span>
+        </button>
+        <button class="home-secondary-btn" onclick="goMinhasDespesas()">
+          <span class="hsb-icon">⛁</span>
+          <span class="hsb-label">Minhas Despesas</span>
+        </button>
+      </div>
+
+      <div class="home-quick-stats" id="homeQuickStats"></div>
+    </div>
+  </div>
+
+  <!-- MODAL IDENTIFICAÇÃO TÉCNICO -->
+  <div class="modal-bg" id="modalTecnico">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="modal-title" id="modalTecnicoTitle">Identificação do Técnico</span>
+        <button class="close-btn" id="modalTecnicoClose" onclick="closeTecnicoModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--ink-soft);line-height:1.5;margin-bottom:18px;">
+          Para o escritório poder identificar quem fez cada atendimento, digite seu nome.
+          <br><br>
+          <em style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--ink-faint);letter-spacing:0.05em;">// esta informação fica salva neste celular</em>
+        </p>
+        <div class="modal-field">
+          <label>Seu Nome</label>
+          <input type="text" id="tecNomeInput" placeholder="Ex: João Silva" autocomplete="name">
+        </div>
+        <button class="btn btn-primary" onclick="salvarTecnico()">✓ Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAWER MENU -->
+  <div class="menu-drawer-bg" id="menuDrawer" onclick="closeMenuOnBg(event)">
+    <div class="menu-drawer">
+      <div class="menu-drawer-head">
+        <div class="menu-brand">Sirona</div>
+        <button class="close-btn" onclick="toggleMenu()">✕</button>
+      </div>
+      <div class="menu-drawer-body">
+        <div class="menu-section-label">Módulo 01 — Técnico</div>
+        <button class="menu-item" onclick="closeMenuAndGo('atendimentos')">
+          <span class="menu-icon">⚒</span>
+          <div class="menu-item-text">
+            <div class="menu-item-title">Atendimentos</div>
+            <div class="menu-item-desc">Lista de relatórios cadastrados</div>
+          </div>
+        </button>
+        <button class="menu-item" onclick="closeMenuAndGo('novo')">
+          <span class="menu-icon">+</span>
+          <div class="menu-item-text">
+            <div class="menu-item-title">Novo Atendimento</div>
+            <div class="menu-item-desc">Iniciar registro em campo</div>
+          </div>
+        </button>
+        <button class="menu-item" onclick="closeMenuAndGo('despesas')">
+          <span class="menu-icon">⛁</span>
+          <div class="menu-item-text">
+            <div class="menu-item-title">Minhas Despesas</div>
+            <div class="menu-item-desc">Consulta de gastos por período</div>
+          </div>
+        </button>
+
+        <div class="menu-section-label" style="margin-top:18px;">Módulo 02 — Escritório</div>
+        <button class="menu-item" onclick="closeMenuAndGo('escritorio')">
+          <span class="menu-icon">⊟</span>
+          <div class="menu-item-text">
+            <div class="menu-item-title">Painel do Escritório</div>
+            <div class="menu-item-desc">Visualização e relatórios consolidados</div>
+          </div>
+        </button>
+
+        <div class="menu-section-label" style="margin-top:18px;">Configurações</div>
+        <button class="menu-item" onclick="closeMenuAndGo('config')">
+          <span class="menu-icon">⚙</span>
+          <div class="menu-item-text">
+            <div class="menu-item-title">Configurações</div>
+            <div class="menu-item-desc">Tema, qualidade de fotos e mais</div>
+          </div>
+        </button>
+        <button class="menu-item" onclick="closeMenuAndGo('trocar-tecnico')">
+          <span class="menu-icon">⚒</span>
+          <div class="menu-item-text">
+            <div class="menu-item-title" id="menuTecNome">Trocar Técnico</div>
+            <div class="menu-item-desc">Alterar nome do técnico salvo neste celular</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIGURAÇÕES -->
+  <div id="screenConfig" class="hidden">
+    <div class="topnav">
+      <button class="back-btn" onclick="goHome()">← Início</button>
+      <span class="topnav-title">Configurações</span>
+    </div>
+
+    <div class="list-head">
+      <h2>Configurações</h2>
+      <div class="count">— preferências do app —</div>
+    </div>
+
+    <!-- TEMA -->
+    <div class="form-paper" style="margin-bottom:14px;">
+      <div class="form-content">
+        <div class="section-bar">
+          <span>Tema</span>
+          <span class="bar-meta" id="cfgThemeLabel">—</span>
+        </div>
+        <div style="padding:12px;">
+          <p style="font-size:12px;color:var(--ink-soft);line-height:1.4;margin-bottom:12px;font-style:italic;">
+            Escolha como o app aparece na sua tela.
+          </p>
+          <div class="period-options" id="themeOptions"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUALIDADE DE IMAGEM -->
+    <div class="form-paper" style="margin-bottom:14px;">
+      <div class="form-content">
+        <div class="section-bar">
+          <span>Qualidade das Fotos</span>
+          <span class="bar-meta" id="cfgQualityLabel">—</span>
+        </div>
+        <div style="padding:12px;">
+          <p style="font-size:12px;color:var(--ink-soft);line-height:1.4;margin-bottom:12px;font-style:italic;">
+            Define a qualidade das fotos das notas fiscais. Maior qualidade = melhor leitura na contabilidade, mas ocupa mais espaço.
+          </p>
+          <div class="period-options" id="qualityOptions"></div>
+          <div style="margin-top:12px;padding:10px;background:var(--paper-2);border:1px dashed var(--line-soft);font-family:'IBM Plex Mono', monospace;font-size:10px;line-height:1.5;color:var(--ink-soft);">
+            <div id="qualityInfo">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFO DO TÉCNICO -->
+    <div class="form-paper" style="margin-bottom:14px;">
+      <div class="form-content">
+        <div class="section-bar">
+          <span>Técnico Identificado</span>
+          <span class="bar-meta" id="cfgTecLabel">—</span>
+        </div>
+        <div style="padding:12px;">
+          <p style="font-size:12px;color:var(--ink-soft);line-height:1.4;margin-bottom:12px;font-style:italic;">
+            Nome que aparece nos atendimentos cadastrados deste celular.
+          </p>
+          <button class="btn btn-secondary" onclick="openTecnicoModal(false)">⚙ Trocar Técnico</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFO DE ARMAZENAMENTO -->
+    <div class="form-paper" style="margin-bottom:14px;">
+      <div class="form-content">
+        <div class="section-bar">
+          <span>Armazenamento</span>
+          <span class="bar-meta" id="cfgStorageLabel">—</span>
+        </div>
+        <div style="padding:12px;">
+          <p style="font-size:12px;color:var(--ink-soft);line-height:1.4;margin-bottom:8px;font-style:italic;">
+            Espaço usado pelo app no celular.
+          </p>
+          <div id="storageBar" style="height:18px;background:var(--paper-2);border:1px solid var(--line);overflow:hidden;margin-bottom:8px;">
+            <div id="storageBarFill" style="height:100%;background:var(--accent);width:0%;transition:width 0.3s;"></div>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);" id="storageDetails">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MINHAS DESPESAS -->
+  <div id="screenDespesas" class="hidden">
+    <div class="topnav">
+      <button class="back-btn" onclick="goHome()">← Início</button>
+      <span class="topnav-title">Minhas Despesas</span>
+    </div>
+
+    <div class="list-head">
+      <h2>Minhas Despesas</h2>
+      <div class="count" id="despesasPeriodLabel">—</div>
+    </div>
+
+    <div class="period-filter" id="despFilterEl">
+      <div class="period-filter-head">
+        <span>Filtro de Período</span>
+        <span class="pf-current" id="despFilterLabel">—</span>
+      </div>
+      <div class="period-options" id="despFilterOptions"></div>
+      <div class="period-custom-row" id="despFilterCustom">
+        <div>
+          <label>De</label>
+          <input type="date" id="despFilterStart" onchange="setDespFilter('custom', this.value, document.getElementById('despFilterEnd').value)">
+        </div>
+        <div>
+          <label>Até</label>
+          <input type="date" id="despFilterEnd" onchange="setDespFilter('custom', document.getElementById('despFilterStart').value, this.value)">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-paper" style="margin-bottom:14px;">
+      <div class="form-content">
+        <div class="section-bar">
+          <span>Resumo</span>
+          <span class="bar-meta" id="despTotalLabel">R$ 0,00</span>
+        </div>
+        <table class="field-table">
+          <tr class="row-2">
+            <td><div class="cell">
+              <span class="cell-label">Atendimentos</span>
+              <input type="text" id="despCountAtend" readonly placeholder="0">
+            </div></td>
+            <td><div class="cell">
+              <span class="cell-label">Notas Fiscais</span>
+              <input type="text" id="despCountNotas" readonly placeholder="0">
+            </div></td>
+          </tr>
+          <tr class="row-2">
+            <td><div class="cell">
+              <span class="cell-label">Km Rodados</span>
+              <input type="text" id="despTotKm" readonly placeholder="0 km">
+            </div></td>
+            <td><div class="cell">
+              <span class="cell-label">Total Geral</span>
+              <input type="text" id="despTotGeral" readonly placeholder="R$ 0,00">
+            </div></td>
+          </tr>
+        </table>
+
+        <div class="section-bar">
+          <span>Despesas por Categoria</span>
+          <span class="bar-meta" id="despCatCount">—</span>
+        </div>
+        <div id="despPorCategoria"></div>
+
+        <div class="section-bar">
+          <span>Lista de Despesas</span>
+          <span class="bar-meta" id="despListCount">0 notas</span>
+        </div>
+        <div class="despesa-row header">
+          <div>Valor</div>
+          <div>Cliente / OT</div>
+          <div>Comprov.</div>
+          <div>Categoria</div>
+        </div>
+        <div id="despListContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIST -->
+  <div id="screenList" class="hidden">
+    <div class="topnav">
+      <button class="back-btn" onclick="goHome()">← Início</button>
+      <span class="topnav-title">Módulo 01 / Atendimentos</span>
+    </div>
+    <div class="list-head">
+      <h2>Atendimentos Registrados</h2>
+      <div class="count" id="atendCount">— 0 atendimentos —</div>
+    </div>
+
+    <div class="period-filter" id="listFilterEl">
+      <div class="period-filter-head">
+        <span>Filtro de Período</span>
+        <span class="pf-current" id="listFilterLabel">Todos</span>
+      </div>
+      <div class="period-options" id="listFilterOptions"></div>
+      <div class="period-custom-row" id="listFilterCustom">
+        <div>
+          <label>De</label>
+          <input type="date" id="listFilterStart" onchange="setListFilter('custom', this.value, document.getElementById('listFilterEnd').value)">
+        </div>
+        <div>
+          <label>Até</label>
+          <input type="date" id="listFilterEnd" onchange="setListFilter('custom', document.getElementById('listFilterStart').value, this.value)">
+        </div>
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Buscar por cliente, OT ou caso..." oninput="renderList()">
+      <button class="search-clear" onclick="clearSearch()" id="searchClearBtn">✕</button>
+    </div>
+
+    <div id="atendList"></div>
+  </div>
+
+  <!-- DETAIL -->
+  <div id="screenDetail" class="hidden">
+    <div class="topnav">
+      <button class="back-btn" onclick="goList()">← Voltar</button>
+      <span class="topnav-title" id="detailNav">Novo Atendimento</span>
+    </div>
+
+    <div class="form-paper">
+      <div class="form-content">
+        <div class="form-header">
+          <div class="org">SIRONA · QUICK SERVICE</div>
+          <h1>Relatório de Atendimento</h1>
+        </div>
+
+        <table class="field-table">
+          <tr class="row-2">
+            <td><div class="cell"><span class="cell-label">Cliente</span>
+              <input type="text" id="dCliente" placeholder="Nome do cliente"></div></td>
+            <td><div class="cell"><span class="cell-label">OT</span>
+              <input type="text" id="dOs" inputmode="numeric" placeholder="OT___"></div></td>
+          </tr>
+          <tr class="row-2">
+            <td><div class="cell"><span class="cell-label">Data do Atendimento</span>
+              <input type="date" id="dData"></div></td>
+            <td><div class="cell"><span class="cell-label">SA</span>
+              <input type="text" id="dCaso" inputmode="numeric" pattern="[0-9]*" placeholder="—"></div></td>
+          </tr>
+        </table>
+
+        <div class="section-bar">
+          <span>Deslocamento</span>
+          <span class="bar-meta" id="deslocSummary">—</span>
+        </div>
+        <table class="field-table">
+          <tr class="row-2">
+            <td><div class="time-cell">
+              <div class="time-cell-label">Hora de Chegada</div>
+              <div class="time-row">
+                <input type="time" class="time-input" id="vChegada" placeholder="—:—" onchange="onTimeEdit('chegada', this.value)">
+                <button class="time-btn" id="bChegada" onclick="registerTime('chegada')">Cheguei</button>
+              </div>
+            </div></td>
+            <td><div class="time-cell">
+              <div class="time-cell-label">Hora de Saída</div>
+              <div class="time-row">
+                <input type="time" class="time-input" id="vSaida" placeholder="—:—" onchange="onTimeEdit('saida', this.value)">
+                <button class="time-btn" id="bSaida" onclick="registerTime('saida')">Saí</button>
+              </div>
+            </div></td>
+          </tr>
+          <tr class="row-2">
+            <td><div class="cell"><span class="cell-label">Horas de Trabalho</span>
+              <input type="time" id="dHorasTrab" placeholder="00:00"></div></td>
+            <td><div class="cell"><span class="cell-label">Horas de Deslocamento</span>
+              <input type="time" id="dHorasDesl" placeholder="00:00"></div></td>
+          </tr>
+          <tr class="row-2">
+            <td><div class="cell"><span class="cell-label">Km Rodada</span>
+              <input type="text" id="dKm" inputmode="decimal" placeholder="0"></div></td>
+            <td><div class="cell"><span class="cell-label">Total Despesas</span>
+              <input type="text" id="dTotal" readonly placeholder="R$ 0,00"></div></td>
+          </tr>
+        </table>
+
+        <div class="section-bar">
+          <span>Despesas</span>
+          <span class="bar-meta" id="despesasSummary">R$ 0,00</span>
+        </div>
+
+        <div class="despesa-row header">
+          <div>Valor</div>
+          <div>Meio Pgto</div>
+          <div>Comprov.</div>
+          <div>Obs.</div>
+        </div>
+        <div id="despesasList"></div>
+        <div class="add-row" onclick="openNotaModal()">+ Adicionar Despesa</div>
+
+        <table class="field-table">
+          <tr><td class="no-bottom" style="border-right:none;">
+            <div class="cell"><span class="cell-label">Observações Gerais</span>
+              <textarea id="dObs" rows="3" placeholder="—"></textarea></div>
+          </td></tr>
+        </table>
+
+        <div class="signatures-block">
+          <div class="sig-cell">
+            <div class="sig-head">
+              <span class="lab">Visto · Técnico</span>
+              <span class="sig-status" id="sigTecStatus">— sem assinatura —</span>
+            </div>
+            <div class="sig-area" id="sigTecArea" onclick="openSigPad('tecnico')">
+              <canvas id="sigTecPreview" width="400" height="100"></canvas>
+              <div class="sig-placeholder" id="sigTecPlaceholder">toque para assinar</div>
+            </div>
+            <div class="sig-meta" id="sigTecMeta"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="exportPdf()">↓ Exportar Relatório PDF</button>
+      <button class="btn btn-secondary" onclick="saveAndBack()">✓ Salvar e Voltar</button>
+      <button class="btn btn-danger" onclick="deleteAtendimento()">Excluir Atendimento</button>
+    </div>
+  </div>
+
+  <!-- ESCRITÓRIO -->
+  <!-- ESCRITÓRIO HOME (limpa) -->
+  <div id="screenCnf" class="hidden">
+    <div class="topnav">
+      <button class="back-btn" onclick="goHome()">← Início</button>
+      <span class="topnav-title">Módulo 02 / Escritório</span>
+    </div>
+
+    <div class="home-clean" style="min-height: calc(100vh - 100px);">
+      <div class="home-brand">Painel · Escritório</div>
+      <h1 class="home-clean-title">Visão <em>Geral</em></h1>
+      <div class="home-clean-sub" id="cnfHomeSub">— bem-vinda —</div>
+
+      <!-- DASHBOARD DE CARDS -->
+      <div id="cnfDashboard" style="margin-top: 18px;">
+        <div class="dash-grid" id="cnfDashGrid"></div>
+      </div>
+
+      <!-- RANKING POR TÉCNICO -->
+      <div class="form-paper" style="margin: 14px 8px;" id="cnfRankingPaper">
+        <div class="form-content">
+          <div class="section-bar">
+            <span>Resumo por Técnico (mês atual)</span>
+            <span class="bar-meta" id="cnfRankingMeta">—</span>
+          </div>
+          <div id="cnfRanking"></div>
+        </div>
+      </div>
+
+      <!-- CALENDÁRIO -->
+      <div class="form-paper" style="margin: 14px 8px;">
+        <div class="form-content" style="padding:0;">
+          <div class="cal-header">
+            <button class="cal-nav" onclick="changeCalMonth(-1)">‹</button>
+            <span id="calTitle">—</span>
+            <button class="cal-nav" onclick="changeCalMonth(1)">›</button>
+          </div>
+          <div id="calGridContainer"></div>
+          <div class="cal-legend">cada ● = 1 atendimento · toque no dia para filtrar</div>
+        </div>
+      </div>
+
+      <!-- ACESSOS -->
+      <div class="home-secondary" style="margin-top: 14px;">
+        <button class="home-secondary-btn full" onclick="goCnfDashboard()" style="padding: 22px 12px;">
+          <span class="hsb-icon" style="font-size:30px;">⊟</span>
+          <span class="hsb-label">Painel Completo</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:0.1em;margin-top:4px;">filtros avançados e exportações</span>
+        </button>
+        <button class="home-secondary-btn" onclick="goCnfDashboard('busca')">
+          <span class="hsb-icon">⌕</span>
+          <span class="hsb-label">Buscar Atend.</span>
+        </button>
+        <button class="home-secondary-btn" onclick="openHistorico()">
+          <span class="hsb-icon">⏲</span>
+          <span class="hsb-label">Histórico</span>
+        </button>
+        <button class="home-secondary-btn full" onclick="goCategorias()">
+          <span class="hsb-icon">⚙</span>
+          <span class="hsb-label">Gerenciar Categorias</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ESCRITÓRIO DASHBOARD (painel completo) -->
+  <div id="screenCnfDashboard" class="hidden">
+    <div class="topnav">
+      <button class="back-btn" onclick="goCnf()">← Voltar</button>
+      <span class="topnav-title">Painel do Escritório</span>
+    </div>
+
+    <div class="list-head">
+      <h2>Painel do Escritório</h2>
+      <div class="count" id="cnfCycleRange">—</div>
+    </div>
+
+    <div class="period-filter" id="cnfFilterEl">
+      <div class="period-filter-head">
+        <span>Filtro de Período</span>
+        <span class="pf-current" id="cnfFilterLabel">—</span>
+      </div>
+      <div class="period-options" id="cnfFilterOptions"></div>
+      <div class="period-custom-row" id="cnfFilterCustom">
+        <div>
+          <label>De</label>
+          <input type="date" id="cnfFilterStart" onchange="setCnfFilter('custom', this.value, document.getElementById('cnfFilterEnd').value)">
+        </div>
+        <div>
+          <label>Até</label>
+          <input type="date" id="cnfFilterEnd" onchange="setCnfFilter('custom', document.getElementById('cnfFilterStart').value, this.value)">
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTRO POR TÉCNICO -->
+    <div class="period-filter" id="tecnicoFilterEl">
+      <div class="period-filter-head">
+        <span>Filtrar por Técnico</span>
+        <span class="pf-current" id="tecnicoFilterLabel">Todos</span>
+      </div>
+      <div class="period-options" id="tecnicoFilterOptions"></div>
+    </div>
+
+    <!-- FILTRO POR CATEGORIA -->
+    <div class="period-filter" id="catFilterEl">
+      <div class="period-filter-head">
+        <span>Filtrar por Categoria</span>
+        <span class="pf-current" id="catFilterLabel">Todas</span>
+      </div>
+      <div class="period-options" id="catFilterOptions"></div>
+    </div>
+
+    <!-- FILTROS EXTRAS (chips) -->
+    <div class="period-filter">
+      <div class="period-filter-head">
+        <span>Pendências e Valor</span>
+        <span class="pf-current" id="extraFilterLabel">—</span>
+      </div>
+      <div style="padding:8px;">
+        <div class="extra-filter-row">
+          <div class="extra-filter-chip" id="chipPend1" onclick="toggleExtraFilter('semAssinatura')">⚠ Sem assinatura</div>
+          <div class="extra-filter-chip" id="chipPend2" onclick="toggleExtraFilter('semFotos')">📷 Sem fotos</div>
+          <div class="extra-filter-chip" id="chipPend3" onclick="toggleExtraFilter('semDespesas')">⛁ Sem despesas</div>
+          <div class="extra-filter-chip" id="chipPend4" onclick="abrirValorMin()">💰 Valor mín.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="cnfSearchInput" placeholder="Buscar atendimento (cliente, OT, caso, data)..." oninput="renderCnf()">
+      <button class="search-clear" onclick="clearCnfSearch()" id="cnfSearchClearBtn">✕</button>
+    </div>
+
+    <div id="cnfContent"></div>
+
+    <div class="actions" id="cnfActions">
+      <button class="btn btn-primary" onclick="exportCnfPdf()">↓ PDF do Período</button>
+      <button class="btn btn-secondary" onclick="exportCnfCsv()">↓ Exportar Excel/CSV</button>
+      <button class="btn btn-secondary" onclick="openHistorico()">⊟ Histórico Completo</button>
+    </div>
+  </div>
+</div>
+
+  <!-- CATEGORIAS -->
+  <div id="screenCategorias" class="hidden">
+    <div class="topnav">
+      <button class="back-btn" onclick="goCnf()">← Voltar</button>
+      <span class="topnav-title">Gerenciar Categorias</span>
+    </div>
+
+    <div class="list-head">
+      <h2>Categorias de Despesa</h2>
+      <div class="count" id="catCount">—</div>
+    </div>
+
+    <div class="form-paper" style="margin-bottom:14px;">
+      <div class="form-content">
+        <div class="section-bar">
+          <span>Lista de Categorias</span>
+          <span class="bar-meta">criadas pelo escritório</span>
+        </div>
+        <div style="padding:12px;">
+          <p style="font-size:12px;color:var(--ink-soft);line-height:1.4;margin-bottom:12px;font-style:italic;">
+            Crie as categorias de despesa que os técnicos poderão usar ao cadastrar gastos. Cada categoria tem um nome e uma cor identificadora.
+          </p>
+          <button class="btn btn-primary" onclick="openCatModal()">+ Nova Categoria</button>
+        </div>
+        <div id="catList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CATEGORIA -->
+  <div class="modal-bg" id="modalCat">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="modal-title" id="modalCatTitle">Nova Categoria</span>
+        <button class="close-btn" onclick="closeCatModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label>Nome da Categoria</label>
+          <input type="text" id="catNome" placeholder="Ex: Combustível, Refeição, Pedágio...">
+        </div>
+        <div class="modal-field">
+          <label>Cor</label>
+          <div id="catColorPicker" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:6px;"></div>
+        </div>
+        <div class="modal-field">
+          <label>Pré-visualização</label>
+          <div id="catPreview" style="padding:14px;background:var(--paper-2);border:1.5px solid var(--line);display:flex;align-items:center;gap:10px;">
+            <span class="cat-bullet" id="catPreviewBullet" style="background:#888;"></span>
+            <span id="catPreviewLabel" style="font-weight:600;">Nova Categoria</span>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="salvarCategoria()">✓ Salvar</button>
+        <button class="btn btn-secondary hidden" id="btnDelCat" onclick="deleteCategoria()" style="margin-top:8px;">✕ Excluir</button>
+      </div>
+    </div>
+  </div>
+
+<!-- MODAL HISTÓRICO -->
+<div class="modal-bg" id="modalHistorico">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">Histórico Completo</span>
+      <button class="close-btn" onclick="closeHistorico()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="historicoSummary" style="background:var(--ink);color:var(--paper);padding:14px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>
+      <div id="historicoList"></div>
+      <button class="btn btn-primary" style="margin-top:14px;" onclick="exportHistoricoPdf()">↓ PDF Completo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SIGNATURE PAD -->
+<div class="modal-bg" id="modalSig">
+  <div class="sigpad-modal">
+    <div class="modal-head">
+      <span class="modal-title" id="sigModalTitle">Assinatura</span>
+      <button class="close-btn" onclick="closeSigPad()">✕</button>
+    </div>
+    <div class="sigpad-canvas-wrap" id="sigpadWrap">
+      <canvas id="sigpadCanvas" width="800" height="560"></canvas>
+      <div class="sigpad-hint">assine no espaço acima</div>
+    </div>
+    <div class="sigpad-actions">
+      <button class="btn btn-primary" onclick="saveSignature()">✓ Salvar Assinatura</button>
+      <button class="btn btn-secondary" onclick="clearSignature()">Limpar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DESPESA -->
+<div class="modal-bg" id="modalNota">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">Nova Despesa</span>
+      <button class="close-btn" onclick="closeNotaModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="method-grid">
+        <div class="method-card active" data-method="camera"><span class="method-icon">📷</span><span class="method-label">Câmera</span></div>
+        <div class="method-card" data-method="gallery"><span class="method-icon">🖼</span><span class="method-label">Galeria</span></div>
+        <div class="method-card" data-method="file"><span class="method-icon">📎</span><span class="method-label">PDF/XML</span></div>
+        <div class="method-card" data-method="manual"><span class="method-icon">✎</span><span class="method-label">Digitar</span></div>
+      </div>
+      <div class="preview-box" id="previewBox"><span class="ph-text">// nenhum arquivo</span></div>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment">
+      <input type="file" id="galleryInput" accept="image/*">
+      <input type="file" id="fileInput" accept=".pdf,.xml,application/pdf,text/xml">
+
+      <div class="modal-field-row">
+        <div class="modal-field"><label>Valor (R$)</label>
+          <input type="text" id="nValor" inputmode="decimal" placeholder="0,00"></div>
+        <div class="modal-field"><label>Data</label>
+          <input type="date" id="nData"></div>
+      </div>
+      <div class="modal-field"><label>Meio de Pagamento</label>
+        <input type="text" id="nMeio" placeholder="Ex: Dinheiro, Cartão, PIX..."></div>
+      <div class="modal-field"><label>Categoria</label>
+        <select id="nCat"></select></div>
+      <div class="modal-field"><label>Observações</label>
+        <input type="text" id="nObs" placeholder="opcional"></div>
+
+      <button class="btn btn-primary" onclick="addNota()">Salvar Despesa</button>
+      <button class="btn btn-danger hidden" id="btnDelNota" onclick="deleteNota()" style="margin-top:8px;">Remover Despesa</button>
+    </div>
+  </div>
+</div>
+
+<div class="viewer" id="viewer">
+  <button class="viewer-close" onclick="closeViewer()">✕</button>
+  <img id="viewerImg" alt="">
+</div>
+
+<div class="toast" id="toast">salvo</div>
+<button class="fab hidden" id="fab" onclick="newAtendimento()">+ Novo Atendimento</button>
+
+<script>
+const STORAGE_KEY = 'sirona_atendimentos_v2';
+let atendimentos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+let currentAtend = null;
+let currentMethod = 'camera';
+let currentFile = null;
+let editingNotaId = null;
+
+// Categorias customizadas pelo escritório
+const CAT_KEY = 'sirona_categorias_v1';
+let appCategorias = JSON.parse(localStorage.getItem(CAT_KEY) || '[]');
+
+function saveCategorias() {
+  localStorage.setItem(CAT_KEY, JSON.stringify(appCategorias));
+}
+
+// Helpers que substituem o antigo CAT_LABELS
+function catLabel(catId) {
+  if (!catId) return '—';
+  const c = appCategorias.find(x => x.id === catId);
+  if (c) return c.label;
+  // Compatibilidade com categorias antigas que possam estar nos dados
+  const legados = {
+    combustivel: 'Combustível', pedagio: 'Pedágio', refeicao: 'Refeição',
+    hospedagem: 'Hospedagem', materiais: 'Materiais', outros: 'Outros'
+  };
+  return legados[catId] || catId;
+}
+
+function catColor(catId) {
+  const c = appCategorias.find(x => x.id === catId);
+  return c ? c.color : '#888';
+}
+
+// Compatibilidade: mantém CAT_LABELS como proxy via catLabel
+const CAT_LABELS = new Proxy({}, {
+  get: (_, key) => catLabel(key)
+});
+
+function fmt(n) {
+  n = Number(n) || 0;
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function todayISO() { return new Date().toISOString().split('T')[0]; }
+function nowHM() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function timeToMinutes(hm) {
+  if (!hm) return null;
+  const [h,m] = hm.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return null;
+  return h * 60 + m;
+}
+function minutesToTime(min) {
+  if (min == null || isNaN(min)) return '';
+  const a = Math.abs(min);
+  return `${String(Math.floor(a/60)).padStart(2,'0')}:${String(a%60).padStart(2,'0')}`;
+}
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(atendimentos)); }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+function uid(p) { return p + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+function totalDespesas(a) {
+  return (a.despesas || []).reduce((s,n) => s + (parseFloat(n.valor)||0), 0);
+}
+
+function showScreen(id) {
+  ['screenHome','screenList','screenDetail','screenCnf','screenCnfDashboard','screenDespesas','screenConfig','screenCategorias'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+  document.getElementById('fab').classList.toggle('hidden', id !== 'screenList');
+  window.scrollTo(0,0);
+}
+function goHome() { showScreen('screenHome'); renderHome(); }
+function goAtendimentos() {
+  showScreen('screenList');
+  setListFilter(listFilter.period, listFilter.start, listFilter.end);
+}
+function goList() {
+  if (currentAtend) saveAtendimento(false);
+  currentAtend = null;
+  showScreen('screenList');
+  renderList();
+}
+function saveAndBack() { saveAtendimento(true); }
+function goDetail(id) {
+  currentAtend = atendimentos.find(a => a.id === id);
+  if (!currentAtend) return;
+  showScreen('screenDetail');
+  renderDetail();
+}
+
+// ============ INDEXEDDB (IMAGENS) ============
+// Armazena dataURLs das fotos das notas no IndexedDB
+// (localStorage limita a ~10MB; IndexedDB aceita centenas de MB)
+const IDB_NAME = 'sirona_db_v1';
+const IDB_STORE = 'images';
+let _idb = null;
+const imageCache = new Map(); // cache em memória: ref → dataURL
+
+function idbOpen() {
+  return new Promise((resolve) => {
+    if (_idb) return resolve(_idb);
+    if (!window.indexedDB) { console.warn('IndexedDB não suportado'); return resolve(null); }
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess = () => { _idb = req.result; resolve(_idb); };
+    req.onerror = () => { console.error('IDB erro:', req.error); resolve(null); };
+  });
+}
+
+async function idbPut(key, value) {
+  const db = await idbOpen();
+  if (!db) return false;
+  return new Promise((resolve) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put(value, key);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => { console.error('IDB put erro'); resolve(false); };
+  });
+}
+
+async function idbGet(key) {
+  const db = await idbOpen();
+  if (!db) return null;
+  return new Promise((resolve) => {
+    const tx = db.transaction(IDB_STORE, 'readonly');
+    const req = tx.objectStore(IDB_STORE).get(key);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
+  });
+}
+
+async function idbDelete(key) {
+  const db = await idbOpen();
+  if (!db) return false;
+  return new Promise((resolve) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).delete(key);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => resolve(false);
+  });
+}
+
+// Salva uma dataURL no IDB e retorna a referência (idb:xxx)
+async function saveImageToIdb(dataUrl) {
+  const key = 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2,9);
+  const ok = await idbPut(key, dataUrl);
+  if (!ok) {
+    console.warn('Falha ao salvar no IDB, usando dataURL direto');
+    return dataUrl; // fallback
+  }
+  const ref = 'idb:' + key;
+  imageCache.set(ref, dataUrl);
+  return ref;
+}
+
+// Retorna URL pra usar em <img src> ou null se não estiver no cache ainda
+// Se for dataURL legado (sem prefixo idb:), retorna direto
+function imgSrc(ref) {
+  if (!ref) return '';
+  if (!ref.startsWith('idb:')) return ref;
+  return imageCache.get(ref) || '';
+}
+
+// Carrega uma única imagem pro cache (assíncrono)
+async function loadImageToCache(ref) {
+  if (!ref || !ref.startsWith('idb:')) return;
+  if (imageCache.has(ref)) return;
+  const data = await idbGet(ref.slice(4));
+  if (data) imageCache.set(ref, data);
+}
+
+// Pré-carrega todas as imagens IDB referenciadas em uso
+async function preloadAllImages() {
+  const refs = new Set();
+  atendimentos.forEach(a => {
+    (a.despesas || []).forEach(n => {
+      if (n.imagem && typeof n.imagem === 'string' && n.imagem.startsWith('idb:')) {
+        refs.add(n.imagem);
+      }
+    });
+  });
+  const promises = [...refs].map(ref => loadImageToCache(ref));
+  await Promise.all(promises);
+}
+
+// Apaga imagem do IDB se for ref idb: (chamada quando despesa é deletada)
+async function deleteImageRef(ref) {
+  if (!ref || !ref.startsWith('idb:')) return;
+  imageCache.delete(ref);
+  await idbDelete(ref.slice(4));
+}
+
+// MIGRAÇÃO: na primeira vez, transfere fotos antigas (dataURL no localStorage)
+// para o IndexedDB, liberando espaço
+const MIGRATION_KEY = 'sirona_idb_migrated_v1';
+async function migrateLegacyImages() {
+  if (localStorage.getItem(MIGRATION_KEY)) return;
+  let migrated = 0;
+  for (const a of atendimentos) {
+    if (!a.despesas) continue;
+    for (const n of a.despesas) {
+      if (n.imagem && typeof n.imagem === 'string' && n.imagem.startsWith('data:')) {
+        // É dataURL legado — migra
+        const ref = await saveImageToIdb(n.imagem);
+        if (ref && ref.startsWith('idb:')) {
+          n.imagem = ref;
+          migrated++;
+        }
+      }
+    }
+  }
+  if (migrated > 0) {
+    save(); // re-salva atendimentos com refs novas
+    console.log(`Migradas ${migrated} imagens para IndexedDB`);
+  }
+  localStorage.setItem(MIGRATION_KEY, '1');
+}
+
+// ============ TÉCNICO (identificação local) ============
+const TEC_KEY = 'sirona_tecnico_v1';
+let tecnicoAtual = localStorage.getItem(TEC_KEY) || '';
+
+function ensureTecnicoCadastrado(callback) {
+  if (tecnicoAtual && tecnicoAtual.trim()) {
+    return true;
+  }
+  // abre modal e guarda callback
+  pendingTecnicoCallback = callback || null;
+  openTecnicoModal(true);
+  return false;
+}
+
+let pendingTecnicoCallback = null;
+
+function openTecnicoModal(obrigatorio) {
+  document.getElementById('tecNomeInput').value = tecnicoAtual || '';
+  document.getElementById('modalTecnicoTitle').textContent =
+    tecnicoAtual ? 'Trocar Técnico' : 'Identificação do Técnico';
+  // Se obrigatório (primeiro uso), esconde botão fechar
+  document.getElementById('modalTecnicoClose').style.display = obrigatorio ? 'none' : '';
+  document.getElementById('modalTecnico').classList.add('active');
+  setTimeout(() => document.getElementById('tecNomeInput').focus(), 200);
+}
+function closeTecnicoModal() {
+  document.getElementById('modalTecnico').classList.remove('active');
+  pendingTecnicoCallback = null;
+}
+function salvarTecnico() {
+  const nome = document.getElementById('tecNomeInput').value.trim();
+  if (!nome) { alert('Por favor, digite seu nome'); return; }
+  tecnicoAtual = nome;
+  localStorage.setItem(TEC_KEY, nome);
+  document.getElementById('modalTecnico').classList.remove('active');
+  toast(`olá, ${nome.split(' ')[0]}`);
+  // atualiza saudação
+  renderHome();
+  // executa callback pendente
+  if (pendingTecnicoCallback) {
+    const cb = pendingTecnicoCallback;
+    pendingTecnicoCallback = null;
+    setTimeout(cb, 100);
+  }
+  // atualiza menu
+  const menuItem = document.getElementById('menuTecNome');
+  if (menuItem) menuItem.textContent = `Técnico: ${nome}`;
+}
+
+// ============ FILTROS DE PERÍODO ============
+const PERIOD_LABELS = {
+  hoje: 'Hoje',
+  semana: 'Esta semana',
+  mes: 'Este mês',
+  quinzena: 'Quinzena atual',
+  mes_passado: 'Mês passado',
+  custom: 'Personalizado',
+  tudo: 'Todos os atendimentos'
+};
+
+function getPeriodRange(periodKey, customStart, customEnd) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const endOfToday = new Date(today); endOfToday.setHours(23,59,59,999);
+
+  if (periodKey === 'hoje') {
+    return { start: today, end: endOfToday };
+  }
+  if (periodKey === 'semana') {
+    const dia = today.getDay(); // 0=dom, 1=seg
+    const diff = dia === 0 ? 6 : dia - 1; // segunda como início
+    const start = new Date(today); start.setDate(today.getDate() - diff);
+    const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23,59,59,999);
+    return { start, end };
+  }
+  if (periodKey === 'mes') {
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    const end = new Date(today.getFullYear(), today.getMonth()+1, 0, 23,59,59);
+    return { start, end };
+  }
+  if (periodKey === 'quinzena') {
+    return getCycleRange();
+  }
+  if (periodKey === 'mes_passado') {
+    const start = new Date(today.getFullYear(), today.getMonth()-1, 1);
+    const end = new Date(today.getFullYear(), today.getMonth(), 0, 23,59,59);
+    return { start, end };
+  }
+  if (periodKey === 'custom' && customStart && customEnd) {
+    const start = new Date(customStart + 'T00:00:00');
+    const end = new Date(customEnd + 'T23:59:59');
+    return { start, end };
+  }
+  return null; // 'tudo'
+}
+
+function inPeriod(isoDate, range) {
+  if (!range) return true; // tudo
+  if (!isoDate) return false;
+  const d = new Date(isoDate + 'T12:00:00');
+  return d >= range.start && d <= range.end;
+}
+
+function formatPeriodLabel(periodKey, customStart, customEnd) {
+  if (periodKey === 'tudo') return 'todos os atendimentos';
+  if (periodKey === 'custom') {
+    if (customStart && customEnd) {
+      return `${fmtDate(customStart)} a ${fmtDate(customEnd)}`;
+    }
+    return 'período personalizado';
+  }
+  const range = getPeriodRange(periodKey);
+  if (!range) return PERIOD_LABELS[periodKey] || '';
+  const s = range.start.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  const e = range.end.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  return `${s} a ${e}`;
+}
+
+// State dos filtros (separados pra cada tela)
+let listFilter = { period: 'tudo', start: '', end: '' };
+let cnfFilter = { period: 'mes', start: '', end: '' };
+let cnfFilterActive = false; // Escritório só mostra dados após usuária escolher filtro
+let despFilter = { period: 'mes', start: '', end: '' };
+let tecnicoFiltro = ''; // '' = todos
+
+function renderPeriodOptions(containerId, currentPeriod, onChangeName) {
+  const opts = [
+    { k: 'hoje', l: 'Hoje' },
+    { k: 'semana', l: 'Esta Semana' },
+    { k: 'mes', l: 'Este Mês' },
+    { k: 'quinzena', l: 'Quinzena' },
+    { k: 'mes_passado', l: 'Mês Passado' },
+    { k: 'tudo', l: 'Tudo' },
+    { k: 'custom', l: 'Personalizado', full: true }
+  ];
+  const html = opts.map(o =>
+    `<div class="period-opt ${o.k === currentPeriod ? 'active' : ''} ${o.full ? 'full' : ''}" onclick="${onChangeName}('${o.k}')">${o.l}</div>`
+  ).join('');
+  document.getElementById(containerId).innerHTML = html;
+}
+
+function setListFilter(periodKey, customStart, customEnd) {
+  listFilter.period = periodKey;
+  if (periodKey === 'custom') {
+    listFilter.start = customStart || listFilter.start || '';
+    listFilter.end = customEnd || listFilter.end || '';
+  }
+  document.getElementById('listFilterCustom').classList.toggle('active', periodKey === 'custom');
+  if (periodKey === 'custom') {
+    document.getElementById('listFilterStart').value = listFilter.start;
+    document.getElementById('listFilterEnd').value = listFilter.end;
+  }
+  renderPeriodOptions('listFilterOptions', periodKey, 'setListFilter');
+  document.getElementById('listFilterLabel').textContent = formatPeriodLabel(periodKey, listFilter.start, listFilter.end);
+  renderList();
+}
+
+function setCnfFilter(periodKey, customStart, customEnd) {
+  cnfFilter.period = periodKey;
+  cnfFilterActive = true; // usuária escolheu um filtro
+  if (periodKey === 'custom') {
+    cnfFilter.start = customStart || cnfFilter.start || '';
+    cnfFilter.end = customEnd || cnfFilter.end || '';
+  }
+  document.getElementById('cnfFilterCustom').classList.toggle('active', periodKey === 'custom');
+  if (periodKey === 'custom') {
+    document.getElementById('cnfFilterStart').value = cnfFilter.start;
+    document.getElementById('cnfFilterEnd').value = cnfFilter.end;
+  }
+  renderPeriodOptions('cnfFilterOptions', periodKey, 'setCnfFilter');
+  document.getElementById('cnfFilterLabel').textContent = formatPeriodLabel(periodKey, cnfFilter.start, cnfFilter.end);
+  renderCnf();
+}
+
+function setDespFilter(periodKey, customStart, customEnd) {
+  despFilter.period = periodKey;
+  if (periodKey === 'custom') {
+    despFilter.start = customStart || despFilter.start || '';
+    despFilter.end = customEnd || despFilter.end || '';
+  }
+  document.getElementById('despFilterCustom').classList.toggle('active', periodKey === 'custom');
+  if (periodKey === 'custom') {
+    document.getElementById('despFilterStart').value = despFilter.start;
+    document.getElementById('despFilterEnd').value = despFilter.end;
+  }
+  renderPeriodOptions('despFilterOptions', periodKey, 'setDespFilter');
+  document.getElementById('despFilterLabel').textContent = formatPeriodLabel(periodKey, despFilter.start, despFilter.end);
+  renderMinhasDespesas();
+}
+
+function setTecnicoFilter(nome) {
+  tecnicoFiltro = nome || '';
+  cnfFilterActive = true; // usuária escolheu um filtro
+  renderTecnicoOptions();
+  document.getElementById('tecnicoFilterLabel').textContent = tecnicoFiltro || 'Todos';
+  renderCnf();
+}
+
+function renderTecnicoOptions() {
+  // Lista todos os técnicos únicos dos atendimentos
+  const tecsSet = new Set();
+  atendimentos.forEach(a => { if (a.tecnico) tecsSet.add(a.tecnico); });
+  const tecs = [...tecsSet].sort();
+
+  const opts = [{ k: '', l: 'Todos' }, ...tecs.map(t => ({ k: t, l: t }))];
+  const html = opts.map(o => {
+    const active = (tecnicoFiltro || '') === o.k ? 'active' : '';
+    const safe = o.k.replace(/'/g, '&#39;');
+    return `<div class="period-opt ${active}" onclick="setTecnicoFilter('${safe}')">${o.l}</div>`;
+  }).join('');
+  document.getElementById('tecnicoFilterOptions').innerHTML = html;
+
+  // Esconde se não há nenhum técnico cadastrado ainda
+  document.getElementById('tecnicoFilterEl').style.display = tecs.length === 0 ? 'none' : '';
+}
+
+// Filtro por categoria
+let catFiltro = '';
+function setCatFilter(catId) {
+  catFiltro = catId || '';
+  cnfFilterActive = true;
+  renderCatOptions();
+  const cat = appCategorias.find(c => c.id === catFiltro);
+  document.getElementById('catFilterLabel').textContent = cat ? cat.label : 'Todas';
+  renderCnf();
+}
+
+function renderCatOptions() {
+  const opts = [{ k: '', l: 'Todas' }, ...appCategorias.map(c => ({ k: c.id, l: c.label }))];
+  const html = opts.map(o => {
+    const active = (catFiltro || '') === o.k ? 'active' : '';
+    return `<div class="period-opt ${active}" onclick="setCatFilter('${o.k}')">${o.l}</div>`;
+  }).join('');
+  document.getElementById('catFilterOptions').innerHTML = html;
+  // Esconde se não há categorias
+  document.getElementById('catFilterEl').style.display = appCategorias.length === 0 ? 'none' : '';
+}
+
+// Filtros extras (pendências e valor mínimo)
+let extraFilters = { semAssinatura: false, semFotos: false, semDespesas: false, valorMin: 0 };
+
+function toggleExtraFilter(key) {
+  extraFilters[key] = !extraFilters[key];
+  cnfFilterActive = true;
+  renderExtraFilters();
+  renderCnf();
+}
+
+function abrirValorMin() {
+  const v = prompt('Valor mínimo do atendimento (R$):', extraFilters.valorMin || '');
+  if (v === null) return;
+  const num = parseFloat(v.replace(',','.')) || 0;
+  extraFilters.valorMin = num;
+  if (num > 0) cnfFilterActive = true;
+  renderExtraFilters();
+  renderCnf();
+}
+
+function renderExtraFilters() {
+  document.getElementById('chipPend1').classList.toggle('active', extraFilters.semAssinatura);
+  document.getElementById('chipPend2').classList.toggle('active', extraFilters.semFotos);
+  document.getElementById('chipPend3').classList.toggle('active', extraFilters.semDespesas);
+  const valChip = document.getElementById('chipPend4');
+  valChip.classList.toggle('active', extraFilters.valorMin > 0);
+  valChip.textContent = extraFilters.valorMin > 0
+    ? `💰 ≥ R$ ${fmt(extraFilters.valorMin)}`
+    : '💰 Valor mín.';
+  // Label resumo
+  const ativos = [];
+  if (extraFilters.semAssinatura) ativos.push('sem ass.');
+  if (extraFilters.semFotos) ativos.push('sem fotos');
+  if (extraFilters.semDespesas) ativos.push('sem desp.');
+  if (extraFilters.valorMin > 0) ativos.push(`≥R$${fmt(extraFilters.valorMin)}`);
+  document.getElementById('extraFilterLabel').textContent =
+    ativos.length === 0 ? 'nenhuma' : ativos.join(' · ');
+}
+
+// Aplica filtros extras a um atendimento
+function passaFiltrosExtras(a) {
+  if (extraFilters.semAssinatura && a.assinaturas && a.assinaturas.tecnico) return false;
+  if (extraFilters.semFotos) {
+    const temFoto = (a.despesas||[]).some(n => n.imagem);
+    if (temFoto) return false;
+  }
+  if (extraFilters.semDespesas && (a.despesas||[]).length > 0) return false;
+  if (extraFilters.valorMin > 0 && totalDespesas(a) < extraFilters.valorMin) return false;
+  // Filtro categoria: atendimento precisa ter pelo menos 1 despesa daquela categoria
+  if (catFiltro && !((a.despesas||[]).some(n => n.categoria === catFiltro))) return false;
+  return true;
+}
+
+function goMinhasDespesas() {
+  ensureTecnicoCadastrado(() => {
+    showScreen('screenDespesas');
+    setDespFilter(despFilter.period, despFilter.start, despFilter.end);
+  });
+}
+
+function renderMinhasDespesas() {
+  const range = getPeriodRange(despFilter.period, despFilter.start, despFilter.end);
+  const periodLabel = formatPeriodLabel(despFilter.period, despFilter.start, despFilter.end);
+  document.getElementById('despesasPeriodLabel').textContent = `— ${periodLabel} —`;
+
+  // Filtra por técnico atual + período
+  const meusAtend = atendimentos.filter(a =>
+    (a.tecnico === tecnicoAtual) && inPeriod(a.data, range)
+  );
+  const minhasDespesas = [];
+  meusAtend.forEach(a => {
+    (a.despesas || []).forEach(n => {
+      minhasDespesas.push({ ...n, _atendId: a.id, _cliente: a.cliente, _os: a.os });
+    });
+  });
+
+  const total = minhasDespesas.reduce((s,n) => s + (parseFloat(n.valor)||0), 0);
+  const totKm = meusAtend.reduce((s,a) => s + (parseFloat(a.km)||0), 0);
+
+  document.getElementById('despCountAtend').value = String(meusAtend.length);
+  document.getElementById('despCountNotas').value = String(minhasDespesas.length);
+  document.getElementById('despTotKm').value = totKm > 0 ? `${totKm} km` : '0 km';
+  document.getElementById('despTotGeral').value = `R$ ${fmt(total)}`;
+  document.getElementById('despTotalLabel').textContent = `R$ ${fmt(total)}`;
+
+  // Por categoria
+  const cats = {};
+  minhasDespesas.forEach(n => { cats[n.categoria] = (cats[n.categoria]||0) + (parseFloat(n.valor)||0); });
+  const catList = document.getElementById('despPorCategoria');
+  if (Object.keys(cats).length === 0) {
+    catList.innerHTML = `<div class="despesa-row empty-row"><div>nenhuma despesa neste período</div></div>`;
+    document.getElementById('despCatCount').textContent = '0 categorias';
+  } else {
+    document.getElementById('despCatCount').textContent =
+      `${Object.keys(cats).length} categoria${Object.keys(cats).length>1?'s':''}`;
+    catList.innerHTML = Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([cat, v]) => {
+      const pct = ((v/total)*100).toFixed(1);
+      return `
+        <div style="padding:10px 12px;border-bottom:1px dashed var(--line-soft);display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;">
+          <div style="font-size:14px;font-weight:500;">${CAT_LABELS[cat]||cat}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-faint);">${pct}%</div>
+          <div style="font-size:14px;font-weight:700;">R$ ${fmt(v)}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // Lista
+  document.getElementById('despListCount').textContent =
+    minhasDespesas.length === 0 ? '0 notas' :
+    minhasDespesas.length === 1 ? '1 nota' :
+    `${minhasDespesas.length} notas`;
+
+  const list = document.getElementById('despListContent');
+  if (minhasDespesas.length === 0) {
+    list.innerHTML = `<div class="despesa-row empty-row"><div>nenhuma despesa neste período</div></div>`;
+  } else {
+    const sorted = [...minhasDespesas].sort((a,b) => (b.data||'').localeCompare(a.data||''));
+    list.innerHTML = sorted.map(n => {
+      let comp;
+      if (n.imagem) {
+        const src = imgSrc(n.imagem);
+        if (src) comp = `<img src="${src}" onclick="event.stopPropagation();viewImg('${n.imagem}')">`;
+        else comp = `<span class="icon">🖼</span>`;
+      }
+      else if (n.arquivo) comp = `<span class="icon">📎</span>`;
+      else comp = `<span class="icon" style="opacity:0.3;">—</span>`;
+      const origem = `${n._cliente || '—'}${n._os ? ' / Nº '+n._os : ''}`;
+      return `
+        <div class="despesa-row" onclick="goDetail('${n._atendId}')">
+          <div class="d-valor">${fmt(parseFloat(n.valor)||0)}</div>
+          <div class="d-meio" style="font-size:11px;line-height:1.2;">${origem}</div>
+          <div class="d-comp">${comp}</div>
+          <div class="d-obs"><span class="cat-bullet small" style="background:${catColor(n.categoria)};"></span> ${catLabel(n.categoria)}</div>
+        </div>`;
+    }).join('');
+  }
+}
+
+function renderHome() {
+  const today = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric'});
+  document.getElementById('homeSub').textContent = `— ${today.toUpperCase()} —`;
+
+  // Saudação
+  const greeting = document.getElementById('homeGreeting');
+  if (greeting) {
+    if (tecnicoAtual) {
+      const primeiro = tecnicoAtual.split(' ')[0];
+      greeting.textContent = `Olá, ${primeiro}`;
+    } else {
+      greeting.textContent = '— bem-vindo —';
+    }
+  }
+
+  // Atualiza item do menu drawer
+  const menuItem = document.getElementById('menuTecNome');
+  if (menuItem) menuItem.textContent = tecnicoAtual ? `Técnico: ${tecnicoAtual}` : 'Trocar Técnico';
+
+  // Quick stats: atendimentos do mês + total de despesas do mês (apenas do técnico atual)
+  const now = new Date();
+  const mesStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const mesEnd = new Date(now.getFullYear(), now.getMonth()+1, 0, 23, 59, 59);
+  const meusAtend = atendimentos.filter(a => {
+    if (tecnicoAtual && a.tecnico !== tecnicoAtual) return false;
+    if (!a.data) return false;
+    const d = new Date(a.data + 'T12:00:00');
+    return d >= mesStart && d <= mesEnd;
+  });
+  const totalMes = meusAtend.reduce((s,a) => s + totalDespesas(a), 0);
+
+  const stats = document.getElementById('homeQuickStats');
+  if (stats) {
+    if (atendimentos.length === 0 || !tecnicoAtual) {
+      stats.innerHTML = '';
+    } else {
+      stats.innerHTML = `
+        <div class="quick-stat">
+          <div class="qs-val">${meusAtend.length}</div>
+          <div class="qs-lab">meus atend. no mês</div>
+        </div>
+        <div class="quick-stat">
+          <div class="qs-val">R$ ${fmt(totalMes)}</div>
+          <div class="qs-lab">minhas despesas/mês</div>
+        </div>
+      `;
+    }
+  }
+}
+
+// Drawer menu
+function toggleMenu() {
+  document.getElementById('menuDrawer').classList.toggle('active');
+}
+function closeMenuOnBg(e) {
+  if (e.target.id === 'menuDrawer') toggleMenu();
+}
+function closeMenuAndGo(target) {
+  toggleMenu();
+  setTimeout(() => {
+    if (target === 'atendimentos') goAtendimentos();
+    else if (target === 'novo') newAtendimento();
+    else if (target === 'despesas') goMinhasDespesas();
+    else if (target === 'escritorio') goCnf();
+    else if (target === 'config') goConfig();
+    else if (target === 'trocar-tecnico') openTecnicoModal(false);
+  }, 100);
+}
+
+function renderList() {
+  const list = document.getElementById('atendList');
+  const searchEl = document.getElementById('searchInput');
+  const searchTerm = (searchEl ? searchEl.value : '').trim().toLowerCase();
+
+  // Botão de limpar busca
+  const clearBtn = document.getElementById('searchClearBtn');
+  if (clearBtn) clearBtn.classList.toggle('visible', !!searchTerm);
+
+  document.getElementById('atendCount').textContent =
+    atendimentos.length === 0 ? '— 0 atendimentos —' :
+    `— ${atendimentos.length} atendimento${atendimentos.length>1?'s':''} —`;
+
+  if (atendimentos.length === 0) {
+    list.innerHTML = `<div class="empty">nenhum atendimento ainda<br>toque em <b>+ Novo Atendimento</b> abaixo</div>`;
+    return;
+  }
+
+  // Filtra por período primeiro
+  const periodRange = getPeriodRange(listFilter.period, listFilter.start, listFilter.end);
+  const periodFiltered = atendimentos.filter(a => inPeriod(a.data, periodRange));
+
+  // Filtra por busca em cima do período
+  const filtered = periodFiltered.filter(a => {
+    if (!searchTerm) return true;
+    const haystack = [
+      a.cliente || '',
+      a.os || '',
+      a.caso || '',
+      a.obs || ''
+    ].join(' ').toLowerCase();
+    return haystack.includes(searchTerm);
+  });
+
+  if (filtered.length === 0) {
+    if (searchTerm) {
+      list.innerHTML = `
+        <div class="no-results">
+          <div class="no-results-icon">⌕</div>
+          nenhum atendimento encontrado para<br><b>"${searchTerm}"</b><br>
+          <span style="font-size:11px;opacity:0.7;">no período: ${formatPeriodLabel(listFilter.period, listFilter.start, listFilter.end)}</span>
+        </div>`;
+    } else {
+      list.innerHTML = `
+        <div class="no-results">
+          <div class="no-results-icon">⌕</div>
+          nenhum atendimento no período<br><b>${formatPeriodLabel(listFilter.period, listFilter.start, listFilter.end)}</b>
+        </div>`;
+    }
+    return;
+  }
+
+  // Ordena por data (mais recente primeiro)
+  const sorted = [...filtered].sort((a,b) =>
+    (b.data||'').localeCompare(a.data||'') || (b.criadoEm||'').localeCompare(a.criadoEm||'')
+  );
+
+  // Agrupa por data
+  const grupos = {};
+  sorted.forEach(a => {
+    const key = a.data || 'sem-data';
+    if (!grupos[key]) grupos[key] = [];
+    grupos[key].push(a);
+  });
+
+  const meses = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  const diasSemana = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  const chaves = Object.keys(grupos).sort((a,b) => b.localeCompare(a));
+
+  list.innerHTML = chaves.map(dataKey => {
+    const grupoAtend = grupos[dataKey];
+    const totalGrupo = grupoAtend.reduce((s,a) => s + totalDespesas(a), 0);
+
+    let dateHeader;
+    if (dataKey === 'sem-data') {
+      dateHeader = `
+        <div class="date-group-head">
+          <div><span class="date-label">Sem data</span></div>
+          <div class="date-meta">${grupoAtend.length} ${grupoAtend.length===1?'atend.':'atends.'} · R$ ${fmt(totalGrupo)}</div>
+        </div>`;
+    } else {
+      const [y, m, d] = dataKey.split('-');
+      const dateObj = new Date(parseInt(y), parseInt(m)-1, parseInt(d));
+      const today = new Date();
+      const yest = new Date(); yest.setDate(today.getDate()-1);
+      const isToday = dateObj.toDateString() === today.toDateString();
+      const isYesterday = dateObj.toDateString() === yest.toDateString();
+      let label;
+      if (isToday) label = 'Hoje';
+      else if (isYesterday) label = 'Ontem';
+      else label = `${diasSemana[dateObj.getDay()]}, ${parseInt(d)} de ${meses[parseInt(m)-1].toLowerCase()}`;
+
+      dateHeader = `
+        <div class="date-group-head">
+          <div>
+            <span class="date-day">${parseInt(d)}/${m}</span>
+            <span class="date-label">${label}</span>
+          </div>
+          <div class="date-meta">${grupoAtend.length} ${grupoAtend.length===1?'atend.':'atends.'} · R$ ${fmt(totalGrupo)}</div>
+        </div>`;
+    }
+
+    const cards = grupoAtend.map(a => {
+      const total = totalDespesas(a);
+      return `
+        <div class="atend-card" onclick="goDetail('${a.id}')">
+          <div class="atend-card-top">
+            <div>
+              <div class="atend-cli">${a.cliente || '— sem cliente —'}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-faint);margin-top:2px;letter-spacing:0.1em;">${a.caso ? 'SA: '+a.caso : '—'}</div>
+            </div>
+            <div class="atend-os">${a.os ? 'Nº '+a.os : '— —'}</div>
+          </div>
+          <div class="atend-card-body">
+            <div class="atend-meta-item"><div class="lab">H. Trab</div><div class="val">${a.horasTrab || '—'}</div></div>
+            <div class="atend-meta-item"><div class="lab">Km</div><div class="val">${a.km || '—'}</div></div>
+            <div class="atend-meta-item"><div class="lab">Despesas</div><div class="val">R$ ${fmt(total)}</div></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    return `<div class="date-group">${dateHeader}${cards}</div>`;
+  }).join('');
+}
+
+function clearSearch() {
+  const input = document.getElementById('searchInput');
+  if (input) {
+    input.value = '';
+    input.focus();
+    renderList();
+  }
+}
+
+function renderDetail() {
+  const a = currentAtend;
+  document.getElementById('detailNav').textContent = a.cliente ? a.cliente : 'Novo Atendimento';
+  document.getElementById('dCliente').value = a.cliente || '';
+  document.getElementById('dOs').value = a.os || '';
+  document.getElementById('dData').value = a.data || todayISO();
+  document.getElementById('dCaso').value = a.caso || '';
+  document.getElementById('dKm').value = a.km || '';
+  document.getElementById('dHorasTrab').value = a.horasTrab || '';
+  document.getElementById('dHorasDesl').value = a.horasDesl || '';
+  document.getElementById('dObs').value = a.obs || '';
+  updateTimeButtons();
+  renderDespesas();
+  updateTotals();
+}
+
+function updateTimeButtons() {
+  const a = currentAtend;
+  const vC = document.getElementById('vChegada');
+  const vS = document.getElementById('vSaida');
+  vC.value = a.chegada || '';
+  vS.value = a.saida || '';
+  const bC = document.getElementById('bChegada');
+  const bS = document.getElementById('bSaida');
+  bC.textContent = a.chegada ? '↻ agora' : 'Cheguei';
+  bS.textContent = a.saida ? '↻ agora' : 'Saí';
+  bC.classList.toggle('set', !!a.chegada);
+  bS.classList.toggle('set', !!a.saida);
+  if (a.chegada && a.saida) {
+    const diff = timeToMinutes(a.saida) - timeToMinutes(a.chegada);
+    document.getElementById('deslocSummary').textContent = diff > 0 ? `${minutesToTime(diff)} no local` : '—';
+  } else if (a.chegada) {
+    document.getElementById('deslocSummary').textContent = `chegou ${a.chegada}`;
+  } else {
+    document.getElementById('deslocSummary').textContent = '—';
+  }
+}
+
+function onTimeEdit(which, value) {
+  const a = currentAtend; if (!a) return;
+  a[which] = value || null;
+  // Recalcula horas trabalhadas se ambos preenchidos
+  if (a.chegada && a.saida) {
+    const diff = timeToMinutes(a.saida) - timeToMinutes(a.chegada);
+    if (diff > 0) {
+      a.horasTrab = minutesToTime(diff);
+      document.getElementById('dHorasTrab').value = a.horasTrab;
+    }
+  }
+  saveAtendimento(false);
+  updateTimeButtons();
+}
+
+function registerTime(which) {
+  const a = currentAtend; if (!a) return;
+  a[which] = nowHM();
+  if (a.chegada && a.saida) {
+    const diff = timeToMinutes(a.saida) - timeToMinutes(a.chegada);
+    if (diff > 0) {
+      a.horasTrab = minutesToTime(diff);
+      document.getElementById('dHorasTrab').value = a.horasTrab;
+    }
+  }
+  saveAtendimento(false);
+  updateTimeButtons();
+}
+
+function renderDespesas() {
+  const a = currentAtend;
+  const list = document.getElementById('despesasList');
+  if (!a.despesas || a.despesas.length === 0) {
+    list.innerHTML = `<div class="despesa-row empty-row"><div>nenhuma despesa registrada</div></div>`;
+    return;
+  }
+  list.innerHTML = a.despesas.map(n => {
+    let comp;
+    if (n.imagem) {
+      const src = imgSrc(n.imagem);
+      if (src) comp = `<img src="${src}" onclick="event.stopPropagation();viewImg('${n.imagem}')">`;
+      else comp = `<span class="icon">🖼</span>`;
+    }
+    else if (n.arquivo) comp = `<span class="icon" title="${n.arquivoNome||''}">📎</span>`;
+    else comp = `<span class="icon" style="opacity:0.3;">—</span>`;
+    return `
+      <div class="despesa-row" onclick="editNota('${n.id}')">
+        <div class="d-valor">${fmt(parseFloat(n.valor)||0)}</div>
+        <div class="d-meio">${n.meio || '—'}</div>
+        <div class="d-comp">${comp}</div>
+        <div class="d-obs">${n.obs || (n.categoria ? CAT_LABELS[n.categoria] : '—')}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateTotals() {
+  const total = totalDespesas(currentAtend);
+  document.getElementById('despesasSummary').textContent = `R$ ${fmt(total)}`;
+  document.getElementById('dTotal').value = `R$ ${fmt(total)}`;
+}
+
+['dCliente','dOs','dData','dCaso','dKm','dHorasTrab','dHorasDesl','dObs'].forEach(id => {
+  document.addEventListener('input', e => {
+    if (e.target && e.target.id === id && currentAtend) {
+      saveAtendimento(false);
+      if (id === 'dCliente') document.getElementById('detailNav').textContent = e.target.value || 'Novo Atendimento';
+    }
+  });
+});
+
+function saveAtendimento(goBack) {
+  const a = currentAtend; if (!a) return;
+  a.cliente = document.getElementById('dCliente').value.trim();
+  a.os = document.getElementById('dOs').value.trim();
+  a.data = document.getElementById('dData').value;
+  a.caso = document.getElementById('dCaso').value.trim();
+  a.km = document.getElementById('dKm').value.trim();
+  a.horasTrab = document.getElementById('dHorasTrab').value.trim();
+  a.horasDesl = document.getElementById('dHorasDesl').value.trim();
+  a.obs = document.getElementById('dObs').value.trim();
+  save();
+  if (goBack) { toast('salvo'); goList(); }
+}
+
+function deleteAtendimento() {
+  if (!confirm('Excluir este atendimento e todas as despesas?')) return;
+  // Limpa imagens do IDB
+  (currentAtend.despesas || []).forEach(n => {
+    if (n.imagem) deleteImageRef(n.imagem);
+  });
+  atendimentos = atendimentos.filter(a => a.id !== currentAtend.id);
+  save();
+  currentAtend = null;
+  toast('excluído');
+  goList();
+}
+
+function newAtendimento() {
+  if (!ensureTecnicoCadastrado(newAtendimento)) return;
+  const novo = {
+    id: uid('a'), cliente: '', os: '', data: todayISO(), caso: '',
+    chegada: null, saida: null, horasTrab: '', horasDesl: '', km: '', obs: '',
+    despesas: [], tecnico: tecnicoAtual,
+    criadoEm: new Date().toISOString()
+  };
+  atendimentos.push(novo);
+  save();
+  currentAtend = novo;
+  showScreen('screenDetail');
+  renderDetail();
+}
+
+function openNotaModal(notaId) {
+  editingNotaId = notaId || null;
+  let n = null;
+  if (notaId) n = (currentAtend.despesas||[]).find(x => x.id === notaId);
+  // Popula select de categorias dinamicamente
+  const sel = document.getElementById('nCat');
+  if (appCategorias.length === 0) {
+    sel.innerHTML = '<option value="">— sem categoria —</option>';
+  } else {
+    sel.innerHTML = '<option value="">— escolher —</option>' + appCategorias.map(c =>
+      `<option value="${c.id}">${c.label}</option>`
+    ).join('');
+  }
+  document.getElementById('nValor').value = n ? n.valor : '';
+  document.getElementById('nData').value = n ? n.data : (currentAtend.data || todayISO());
+  document.getElementById('nMeio').value = n ? (n.meio || '') : '';
+  document.getElementById('nCat').value = n ? (n.categoria || '') : '';
+  document.getElementById('nObs').value = n ? (n.obs || '') : '';
+  document.getElementById('btnDelNota').classList.toggle('hidden', !notaId);
+  if (n && n.imagem) {
+    currentFile = { tipo: 'imagem', dado: n.imagem, nome: 'foto' };
+    const src = imgSrc(n.imagem);
+    if (src) {
+      document.getElementById('previewBox').innerHTML = `<img src="${src}">`;
+    } else {
+      document.getElementById('previewBox').innerHTML = '<span class="ph-text">// carregando imagem...</span>';
+      // Carrega assincronamente
+      loadImageToCache(n.imagem).then(() => {
+        const newSrc = imgSrc(n.imagem);
+        if (newSrc) document.getElementById('previewBox').innerHTML = `<img src="${newSrc}">`;
+      });
+    }
+  } else if (n && n.arquivo) {
+    currentFile = { tipo: 'arquivo', dado: n.arquivo, nome: n.arquivoNome };
+    document.getElementById('previewBox').innerHTML =
+      `<div style="font-size:24px;">📎</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;">${n.arquivoNome||''}</div>`;
+  } else {
+    currentFile = null;
+    document.getElementById('previewBox').innerHTML = '<span class="ph-text">// nenhum arquivo</span>';
+  }
+  setMethodVisual('camera');
+  document.getElementById('modalNota').classList.add('active');
+}
+function closeNotaModal() {
+  document.getElementById('modalNota').classList.remove('active');
+  editingNotaId = null;
+}
+function editNota(id) { openNotaModal(id); }
+function deleteNota() {
+  if (!editingNotaId) return;
+  if (!confirm('Remover esta despesa?')) return;
+  const nota = currentAtend.despesas.find(n => n.id === editingNotaId);
+  if (nota && nota.imagem) {
+    deleteImageRef(nota.imagem); // async, mas não precisamos esperar
+  }
+  currentAtend.despesas = currentAtend.despesas.filter(n => n.id !== editingNotaId);
+  saveAtendimento(false);
+  renderDespesas();
+  updateTotals();
+  closeNotaModal();
+  toast('removida');
+}
+
+document.querySelectorAll('.method-card').forEach(card => {
+  card.onclick = () => {
+    const m = card.dataset.method;
+    setMethodVisual(m);
+    if (m === 'camera') document.getElementById('cameraInput').click();
+    if (m === 'gallery') document.getElementById('galleryInput').click();
+    if (m === 'file') document.getElementById('fileInput').click();
+    if (m === 'manual') {
+      currentFile = null;
+      document.getElementById('previewBox').innerHTML = '<span class="ph-text">// modo digitação</span>';
+    }
+  };
+});
+function setMethodVisual(m) {
+  currentMethod = m;
+  document.querySelectorAll('.method-card').forEach(c => c.classList.toggle('active', c.dataset.method === m));
+}
+
+function handleImage(input) {
+  const file = input.files[0]; if (!file) return;
+  // Mostra preview rápido enquanto comprime
+  const previewBox = document.getElementById('previewBox');
+  previewBox.innerHTML = '<span class="ph-text">// processando imagem...</span>';
+  compressImage(file, (dataUrl, fileName) => {
+    currentFile = { tipo: 'imagem', dado: dataUrl, nome: fileName };
+    previewBox.innerHTML = `<img src="${dataUrl}">`;
+  });
+}
+document.getElementById('cameraInput').onchange = function(){ handleImage(this); };
+document.getElementById('galleryInput').onchange = function(){ handleImage(this); };
+document.getElementById('fileInput').onchange = function() {
+  const file = this.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    currentFile = { tipo: 'arquivo', dado: e.target.result, nome: file.name };
+    document.getElementById('previewBox').innerHTML =
+      `<div style="font-size:24px;">📎</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;word-break:break-all;">${file.name}</div>`;
+  };
+  reader.readAsDataURL(file);
+};
+
+async function addNota() {
+  const valor = document.getElementById('nValor').value.replace(',','.').trim();
+  const data = document.getElementById('nData').value;
+  if (!valor || !data) { alert('Preencha valor e data'); return; }
+  const meio = document.getElementById('nMeio').value.trim();
+  const cat = document.getElementById('nCat').value;
+  const obs = document.getElementById('nObs').value.trim();
+
+  // Resolve imagem: se é dataURL nova, salva no IDB e usa ref
+  let imagemRef = null;
+  let arquivoRef = null;
+  let arquivoNome = null;
+  if (currentFile && currentFile.tipo === 'imagem') {
+    const dado = currentFile.dado;
+    if (dado && dado.startsWith && dado.startsWith('data:')) {
+      // dataURL nova - salva no IDB
+      imagemRef = await saveImageToIdb(dado);
+    } else {
+      // já é uma ref idb: ou similar
+      imagemRef = dado;
+    }
+  } else if (currentFile && currentFile.tipo === 'arquivo') {
+    // arquivos PDF/XML continuam no localStorage por enquanto
+    arquivoRef = currentFile.dado;
+    arquivoNome = currentFile.nome;
+  }
+
+  if (editingNotaId) {
+    const n = currentAtend.despesas.find(x => x.id === editingNotaId);
+    if (n) {
+      n.valor = valor; n.data = data; n.meio = meio; n.categoria = cat; n.obs = obs;
+      if (currentFile) {
+        // Se trocou a imagem, apaga a antiga do IDB
+        if (n.imagem && n.imagem !== imagemRef) {
+          await deleteImageRef(n.imagem);
+        }
+        if (currentFile.tipo === 'imagem') {
+          n.imagem = imagemRef; n.arquivo = null; n.arquivoNome = null;
+        } else {
+          n.arquivo = arquivoRef; n.arquivoNome = arquivoNome; n.imagem = null;
+        }
+      }
+    }
+    toast('atualizado');
+  } else {
+    const nova = {
+      id: uid('n'), valor, data, meio, categoria: cat, obs,
+      imagem: imagemRef,
+      arquivo: arquivoRef,
+      arquivoNome: arquivoNome
+    };
+    if (!currentAtend.despesas) currentAtend.despesas = [];
+    currentAtend.despesas.push(nova);
+    toast('despesa adicionada');
+  }
+  try {
+    saveAtendimento(false);
+  } catch (e) {
+    console.error('Erro ao salvar:', e);
+    alert('Erro ao salvar. Pode estar sem espaço no app — abra Configurações > Armazenamento.');
+    return;
+  }
+  renderDespesas();
+  updateTotals();
+  closeNotaModal();
+}
+
+window.viewImg = async function(ref) {
+  // Se for ref idb:, resolve do cache (ou busca no IDB)
+  let src = imgSrc(ref);
+  if (!src && ref && ref.startsWith && ref.startsWith('idb:')) {
+    await loadImageToCache(ref);
+    src = imgSrc(ref);
+  }
+  if (!src) src = ref; // fallback (legado)
+  document.getElementById('viewerImg').src = src;
+  document.getElementById('viewer').classList.add('active');
+};
+function closeViewer() { document.getElementById('viewer').classList.remove('active'); }
+
+// PDF
+async function exportPdf() {
+  // Só salva se estiver na tela de detalhe (campos editáveis presentes)
+  if (!document.getElementById('screenDetail').classList.contains('hidden')) {
+    saveAtendimento(false);
+  }
+  const a = currentAtend; if (!a) return;
+  // Pré-carrega imagens do IDB pro cache antes de gerar o PDF
+  const refs = (a.despesas||[]).filter(n => n.imagem).map(n => n.imagem);
+  await Promise.all(refs.map(r => loadImageToCache(r)));
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const total = totalDespesas(a);
+  const pageW = 210;
+
+  // watermark
+  doc.setTextColor(245,225,225);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(80);
+  doc.text('SIRONA', 105, 160, { align: 'center', angle: -25 });
+
+  doc.setDrawColor(26,26,26);
+  doc.setLineWidth(0.6);
+  doc.rect(10, 10, pageW-20, 277);
+
+  doc.setTextColor(26,26,26);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.text('SIRONA · QUICK SERVICE', 105, 18, { align: 'center' });
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(14);
+  doc.text('RELATÓRIO DE ATENDIMENTO', 105, 25, { align: 'center' });
+  if (a.tecnico) {
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.text(`Técnico: ${a.tecnico}`, 105, 30, { align: 'center' });
+  }
+  doc.setLineWidth(0.4);
+  doc.line(10, 33, pageW-10, 33);
+
+  let y = 33;
+  const colW = (pageW - 20) / 2;
+  const rowH = 12;
+
+  doc.line(10, y, pageW-10, y);
+  doc.line(10+colW, y, 10+colW, y+rowH);
+  doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+  doc.text('CLIENTE', 12, y+4);
+  doc.text('OT', 12+colW, y+4);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(26,26,26);
+  doc.text(a.cliente || '—', 12, y+10);
+  doc.text(a.os ? `Nº ${a.os}` : '—', 12+colW, y+10);
+  y += rowH;
+
+  doc.line(10, y, pageW-10, y);
+  doc.line(10+colW, y, 10+colW, y+rowH);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,100,100);
+  doc.text('DATA DO ATENDIMENTO', 12, y+4);
+  doc.text('SA', 12+colW, y+4);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(26,26,26);
+  doc.text(fmtDate(a.data), 12, y+10);
+  doc.text(a.caso || '—', 12+colW, y+10);
+  y += rowH;
+
+  doc.setFillColor(26,26,26);
+  doc.rect(10, y, pageW-20, 7, 'F');
+  doc.setTextColor(250,250,247); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('DESLOCAMENTO', 12, y+5);
+  doc.setTextColor(26,26,26);
+  y += 7;
+
+  doc.line(10, y, pageW-10, y);
+  doc.line(10+colW, y, 10+colW, y+rowH);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,100,100);
+  doc.text('HORA DE CHEGADA', 12, y+4);
+  doc.text('HORA DE SAÍDA', 12+colW, y+4);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(26,26,26);
+  doc.text(a.chegada || '—', 12, y+10);
+  doc.text(a.saida || '—', 12+colW, y+10);
+  y += rowH;
+
+  doc.line(10, y, pageW-10, y);
+  doc.line(10+colW, y, 10+colW, y+rowH);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,100,100);
+  doc.text('HORAS DE TRABALHO', 12, y+4);
+  doc.text('HORAS DE DESLOCAMENTO', 12+colW, y+4);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(26,26,26);
+  doc.text(a.horasTrab || '—', 12, y+10);
+  doc.text(a.horasDesl || '—', 12+colW, y+10);
+  y += rowH;
+
+  doc.line(10, y, pageW-10, y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,100,100);
+  doc.text('KM RODADA', 12, y+4);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(26,26,26);
+  doc.text(a.km ? `${a.km} km` : '—', 12, y+10);
+  y += rowH;
+
+  doc.setFillColor(26,26,26);
+  doc.rect(10, y, pageW-20, 7, 'F');
+  doc.setTextColor(250,250,247); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('DESPESAS', 12, y+5);
+  doc.text(`TOTAL: R$ ${fmt(total)}`, pageW-12, y+5, { align:'right' });
+  doc.setTextColor(26,26,26);
+  y += 7;
+
+  const wVal = 35, wMeio = 55, wComp = 30, wObs = 70;
+  const xVal = 10, xMeio = xVal+wVal, xComp = xMeio+wMeio, xObs = xComp+wComp;
+
+  doc.setFillColor(243,242,238);
+  doc.rect(10, y, pageW-20, 6, 'F');
+  doc.line(xMeio, y, xMeio, y+6);
+  doc.line(xComp, y, xComp, y+6);
+  doc.line(xObs, y, xObs, y+6);
+  doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(80,80,80);
+  doc.text('VALOR', xVal+wVal/2, y+4, {align:'center'});
+  doc.text('MEIO PGTO', xMeio+wMeio/2, y+4, {align:'center'});
+  doc.text('COMPROV.', xComp+wComp/2, y+4, {align:'center'});
+  doc.text('OBSERVAÇÕES', xObs+wObs/2, y+4, {align:'center'});
+  doc.setTextColor(26,26,26);
+  y += 6;
+  doc.line(10, y, pageW-10, y);
+
+  if (!a.despesas || a.despesas.length === 0) {
+    doc.setFont('helvetica','italic'); doc.setFontSize(9); doc.setTextColor(140,140,140);
+    doc.text('— sem despesas registradas —', 105, y+8, {align:'center'});
+    doc.setTextColor(26,26,26);
+    y += 14;
+    doc.line(10, y, pageW-10, y);
+  } else {
+    a.despesas.forEach(n => {
+      const rH = 14;
+      if (y + rH > 280) { doc.addPage(); doc.rect(10,10,pageW-20,277); y = 15; }
+      doc.line(xMeio, y, xMeio, y+rH);
+      doc.line(xComp, y, xComp, y+rH);
+      doc.line(xObs, y, xObs, y+rH);
+      doc.setFont('helvetica','bold'); doc.setFontSize(11);
+      doc.text(fmt(parseFloat(n.valor)||0), xVal+wVal-3, y+8, {align:'right'});
+      doc.setFont('helvetica','normal'); doc.setFontSize(9);
+      const meioLines = doc.splitTextToSize(n.meio || '—', wMeio-4);
+      doc.text(meioLines.slice(0,2), xMeio+2, y+5);
+      if (n.imagem) {
+        try {
+          const imgData = imgSrc(n.imagem);
+          if (imgData) {
+            const fmtImg = imgData.includes('image/png') ? 'PNG' : 'JPEG';
+            doc.addImage(imgData, fmtImg, xComp+5, y+1, 20, 12);
+          } else {
+            doc.setFontSize(8);
+            doc.text('[img]', xComp+wComp/2, y+8, {align:'center'});
+          }
+        } catch (e) {
+          doc.setFontSize(8);
+          doc.text('[img]', xComp+wComp/2, y+8, {align:'center'});
+        }
+      } else if (n.arquivo) {
+        doc.setFontSize(8);
+        doc.text('[arq]', xComp+wComp/2, y+8, {align:'center'});
+      } else {
+        doc.setFontSize(9); doc.setTextColor(160,160,160);
+        doc.text('—', xComp+wComp/2, y+8, {align:'center'});
+        doc.setTextColor(26,26,26);
+      }
+      doc.setFontSize(8);
+      const obsTexto = n.obs || (n.categoria ? CAT_LABELS[n.categoria] : '');
+      const obsLines = doc.splitTextToSize(`${fmtDate(n.data)} · ${obsTexto}`, wObs-4);
+      doc.text(obsLines.slice(0,3), xObs+2, y+5);
+      y += rH;
+      doc.line(10, y, pageW-10, y);
+    });
+  }
+
+  if (a.obs) {
+    if (y + 24 > 280) { doc.addPage(); doc.rect(10,10,pageW-20,277); y = 15; }
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,100,100);
+    doc.text('OBSERVAÇÕES GERAIS', 12, y+4);
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(26,26,26);
+    const obsLines = doc.splitTextToSize(a.obs, pageW-24);
+    doc.text(obsLines, 12, y+10);
+    y += 10 + obsLines.length * 5 + 4;
+    doc.line(10, y, pageW-10, y);
+  }
+
+  // ASSINATURAS
+  if (y < 230) y = 230;
+  if (y + 50 > 280) { doc.addPage(); doc.rect(10,10,pageW-20,277); y = 210; }
+
+  const sigBlockH = 38;
+  doc.setLineWidth(0.4);
+  doc.line(10, y, pageW-10, y);
+  doc.line(10+colW, y, 10+colW, y+sigBlockH);
+
+  // Cabeçalhos
+  doc.setFontSize(7); doc.setTextColor(100,100,100); doc.setFont('helvetica','normal');
+  doc.text('VISTO · TÉCNICO', 12, y+4);
+  doc.text('VISTO · BACKOFFICE', 12+colW, y+4);
+
+  const sigs = a.assinaturas || {};
+
+  // Técnico
+  if (sigs.tecnico && sigs.tecnico.imagem) {
+    try {
+      doc.addImage(sigs.tecnico.imagem, 'PNG', 13, y+6, colW-6, 22);
+    } catch (e) {}
+    doc.setFontSize(6); doc.setTextColor(120,120,120);
+    doc.text(`assinado em ${new Date(sigs.tecnico.data).toLocaleString('pt-BR')}`, 12, y+sigBlockH-2);
+  } else {
+    doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(180,180,180);
+    doc.text('— sem assinatura —', 12+colW/2, y+sigBlockH/2+2, {align:'center'});
+  }
+
+  // Backoffice
+  if (sigs.backoffice && sigs.backoffice.imagem) {
+    try {
+      doc.addImage(sigs.backoffice.imagem, 'PNG', 13+colW, y+6, colW-6, 22);
+    } catch (e) {}
+    doc.setFontSize(6); doc.setTextColor(120,120,120); doc.setFont('helvetica','normal');
+    doc.text(`aprovado em ${new Date(sigs.backoffice.data).toLocaleString('pt-BR')}`, 12+colW, y+sigBlockH-2);
+  } else {
+    doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(180,180,180);
+    doc.text('— sem assinatura —', 12+colW+colW/2, y+sigBlockH/2+2, {align:'center'});
+  }
+  doc.setTextColor(26,26,26);
+
+  y += sigBlockH;
+  doc.line(10, y, pageW-10, y);
+
+  const comImg = (a.despesas||[]).filter(n => n.imagem);
+  if (comImg.length > 0) {
+    doc.addPage();
+    doc.rect(10,10,pageW-20,277);
+    doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text('COMPROVANTES — ' + (a.cliente || ''), 12, 18);
+    doc.setLineWidth(0.4);
+    doc.line(10, 22, pageW-10, 22);
+    let yi = 30;
+    for (const n of comImg) {
+      if (yi > 220) { doc.addPage(); doc.rect(10,10,pageW-20,277); yi = 15; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(9);
+      doc.text(`R$ ${fmt(parseFloat(n.valor))} · ${n.meio || '—'} · ${fmtDate(n.data)}`, 12, yi);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(120,120,120);
+      doc.text(`${CAT_LABELS[n.categoria]||''} · ${n.obs||''}`, 12, yi+4);
+      doc.setTextColor(26,26,26);
+      yi += 8;
+      try {
+        const imgData = imgSrc(n.imagem);
+        if (imgData) {
+          const fmtImg = imgData.includes('image/png') ? 'PNG' : 'JPEG';
+          doc.addImage(imgData, fmtImg, 12, yi, 80, 60);
+          yi += 65;
+        } else {
+          yi += 6;
+        }
+      } catch (e) { yi += 6; }
+    }
+  }
+
+  const tot = doc.internal.getNumberOfPages();
+  for (let i=1; i<=tot; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7); doc.setTextColor(140,140,140);
+    doc.text(`pág ${i}/${tot}`, pageW-12, 295, {align:'right'});
+    doc.text(`gerado ${new Date().toLocaleString('pt-BR')}`, 12, 295);
+  }
+  const safe = (s) => (s||'cliente').replace(/[^\w\-]/g,'_').slice(0,30);
+  doc.save(`sirona-${safe(a.cliente)}-${a.data || todayISO()}.pdf`);
+  toast('pdf gerado');
+}
+
+// ============ CNF (MÓDULO 02) ============
+function getCycleRange(refDate) {
+  const today = refDate || new Date();
+  const day = today.getDate();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  if (day <= 15) {
+    return { start: new Date(year, month, 1), end: new Date(year, month, 15, 23, 59, 59) };
+  }
+  return { start: new Date(year, month, 16), end: new Date(year, month + 1, 0, 23, 59, 59) };
+}
+function inCycle(isoDate, cycle) {
+  if (!isoDate) return false;
+  const d = new Date(isoDate + 'T12:00:00');
+  return d >= cycle.start && d <= cycle.end;
+}
+function getQuinzenaKey(isoDate) {
+  if (!isoDate) return null;
+  const [y, m, d] = isoDate.split('-');
+  const dia = parseInt(d, 10);
+  return `${y}-${m}-${dia <= 15 ? 'Q1' : 'Q2'}`;
+}
+function quinzenaLabel(key) {
+  const [y, m, q] = key.split('-');
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const range = q === 'Q1' ? '01–15' : '16–fim';
+  return `${meses[parseInt(m,10)-1]}/${y} · ${range}`;
+}
+function quinzenaRangeFromKey(key) {
+  const [y, m, q] = key.split('-');
+  const ano = parseInt(y,10), mes = parseInt(m,10) - 1;
+  if (q === 'Q1') return { start: new Date(ano, mes, 1), end: new Date(ano, mes, 15, 23, 59, 59) };
+  return { start: new Date(ano, mes, 16), end: new Date(ano, mes + 1, 0, 23, 59, 59) };
+}
+
+// Storage para despesas avulsas (mantido pra compatibilidade, mas não mais usado no Escritório)
+const AVULSAS_KEY = 'sirona_avulsas_v1';
+let avulsas = JSON.parse(localStorage.getItem(AVULSAS_KEY) || '[]');
+function saveAvulsas() { localStorage.setItem(AVULSAS_KEY, JSON.stringify(avulsas)); }
+
+// Coleta todas as despesas dos atendimentos
+function getAllDespesas() {
+  const all = [];
+  atendimentos.forEach(a => {
+    (a.despesas || []).forEach(n => {
+      all.push({
+        ...n,
+        _atendId: a.id,
+        _cliente: a.cliente,
+        _os: a.os,
+        _atendData: a.data
+      });
+    });
+  });
+  return all;
+}
+
+function goCnf() {
+  showScreen('screenCnf');
+  renderCnfHome();
+}
+
+function goCnfDashboard(initialAction) {
+  showScreen('screenCnfDashboard');
+  // Reseta para estado "vazio - escolha um filtro"
+  cnfFilterActive = false;
+  // Limpa busca também
+  const searchInp = document.getElementById('cnfSearchInput');
+  if (searchInp) searchInp.value = '';
+  if (initialAction === 'busca') {
+    setTimeout(() => {
+      const inp = document.getElementById('cnfSearchInput');
+      if (inp) inp.focus();
+    }, 200);
+  }
+  // Renderiza filtros visualmente sem ativar
+  renderPeriodOptions('cnfFilterOptions', cnfFilter.period, 'setCnfFilter');
+  document.getElementById('cnfFilterLabel').textContent = '— escolha um período —';
+  document.getElementById('cnfFilterCustom').classList.toggle('active', cnfFilter.period === 'custom');
+  renderTecnicoOptions();
+  renderCnf();
+}
+
+// Estado do calendário visualizado
+let calCurrentMonth = new Date().getMonth();
+let calCurrentYear = new Date().getFullYear();
+
+function renderCnfHome() {
+  const today = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric'});
+  document.getElementById('cnfHomeSub').textContent = `— ${today.toUpperCase()} —`;
+
+  renderCnfDashCards();
+  renderCnfRanking();
+  renderCalendar();
+}
+
+function renderCnfDashCards() {
+  const grid = document.getElementById('cnfDashGrid');
+  if (!grid) return;
+
+  const now = new Date();
+  const mesStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const mesEnd = new Date(now.getFullYear(), now.getMonth()+1, 0, 23, 59, 59);
+  const mesPasStart = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const mesPasEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+
+  const inRange = (a, s, e) => {
+    if (!a.data) return false;
+    const d = new Date(a.data + 'T12:00:00');
+    return d >= s && d <= e;
+  };
+
+  const atendMes = atendimentos.filter(a => inRange(a, mesStart, mesEnd));
+  const atendPas = atendimentos.filter(a => inRange(a, mesPasStart, mesPasEnd));
+  const totalMes = atendMes.reduce((s,a) => s + totalDespesas(a), 0);
+  const totalPas = atendPas.reduce((s,a) => s + totalDespesas(a), 0);
+  const variacao = totalPas > 0 ? ((totalMes - totalPas) / totalPas * 100) : null;
+
+  const tecsSet = new Set();
+  atendMes.forEach(a => { if (a.tecnico) tecsSet.add(a.tecnico); });
+
+  let totalNotas = 0;
+  atendMes.forEach(a => totalNotas += (a.despesas||[]).length);
+
+  // Atendimentos sem assinatura técnica
+  const semAss = atendMes.filter(a => !a.assinaturas || !a.assinaturas.tecnico).length;
+
+  if (atendimentos.length === 0) {
+    grid.innerHTML = `<div class="dash-card wide" style="text-align:center;color:var(--ink-faint);font-style:italic;">
+      nenhum atendimento cadastrado ainda
+    </div>`;
+    document.getElementById('cnfRankingPaper').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('cnfRankingPaper').style.display = '';
+
+  const variacaoTxt = variacao === null
+    ? 'sem comparação'
+    : variacao >= 0
+      ? `▲ ${variacao.toFixed(1)}% vs mês passado`
+      : `▼ ${Math.abs(variacao).toFixed(1)}% vs mês passado`;
+  const variacaoCor = variacao === null ? 'var(--ink-faint)' :
+    variacao >= 0 ? '#dc2626' : '#059669';
+
+  grid.innerHTML = `
+    <div class="dash-card wide">
+      <div class="dash-card-label">Total este mês</div>
+      <div class="dash-card-value">R$ ${fmt(totalMes)}</div>
+      <div class="dash-card-sub" style="color:${variacaoCor};">${variacaoTxt}</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-label">Atendimentos</div>
+      <div class="dash-card-value">${atendMes.length}</div>
+      <div class="dash-card-sub">no mês atual</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-label">Notas Fiscais</div>
+      <div class="dash-card-value">${totalNotas}</div>
+      <div class="dash-card-sub">no mês atual</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-label">Técnicos ativos</div>
+      <div class="dash-card-value">${tecsSet.size}</div>
+      <div class="dash-card-sub">${tecsSet.size===1?'técnico':'técnicos'} no mês</div>
+    </div>
+    ${semAss > 0 ? `
+    <div class="dash-card alert">
+      <div class="dash-card-label">⚠ sem assinatura</div>
+      <div class="dash-card-value">${semAss}</div>
+      <div class="dash-card-sub">requer atenção</div>
+    </div>` : `
+    <div class="dash-card">
+      <div class="dash-card-label">Status</div>
+      <div class="dash-card-value" style="font-size:14px;color:#059669;">✓ ok</div>
+      <div class="dash-card-sub">todos assinados</div>
+    </div>`}
+  `;
+}
+
+function renderCnfRanking() {
+  const container = document.getElementById('cnfRanking');
+  if (!container) return;
+
+  const now = new Date();
+  const mesStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const mesEnd = new Date(now.getFullYear(), now.getMonth()+1, 0, 23, 59, 59);
+
+  // Agrupa atendimentos do mês por técnico
+  const porTec = {};
+  atendimentos.forEach(a => {
+    if (!a.data || !a.tecnico) return;
+    const d = new Date(a.data + 'T12:00:00');
+    if (d < mesStart || d > mesEnd) return;
+    if (!porTec[a.tecnico]) porTec[a.tecnico] = { atend: 0, total: 0 };
+    porTec[a.tecnico].atend++;
+    porTec[a.tecnico].total += totalDespesas(a);
+  });
+
+  const lista = Object.entries(porTec).map(([nome, d]) => ({ nome, ...d }))
+    .sort((a,b) => b.total - a.total);
+
+  document.getElementById('cnfRankingMeta').textContent =
+    lista.length === 0 ? 'sem dados' : `${lista.length} ${lista.length===1?'técnico':'técnicos'}`;
+
+  if (lista.length === 0) {
+    container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--ink-faint);font-style:italic;font-size:12px;">
+      nenhum atendimento do mês atual
+    </div>`;
+    return;
+  }
+
+  const maxTotal = Math.max(...lista.map(l => l.total)) || 1;
+  container.innerHTML = lista.map(l => {
+    const pct = ((l.total / maxTotal) * 100).toFixed(0);
+    return `
+      <div class="rank-row">
+        <div>
+          <div class="rank-name">${l.nome}</div>
+          <div class="rank-stats">${l.atend} ${l.atend===1?'atend.':'atends.'}</div>
+        </div>
+        <div class="rank-value">R$ ${fmt(l.total)}</div>
+        <div class="rank-bar"><div class="rank-bar-fill" style="width:${pct}%;"></div></div>
+      </div>`;
+  }).join('');
+}
+
+function renderCalendar() {
+  const container = document.getElementById('calGridContainer');
+  if (!container) return;
+
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('calTitle').textContent =
+    `${meses[calCurrentMonth]} ${calCurrentYear}`;
+
+  // Conta atendimentos por dia no mês visualizado
+  const porDia = {};
+  atendimentos.forEach(a => {
+    if (!a.data) return;
+    const [y,m,d] = a.data.split('-').map(Number);
+    if (y === calCurrentYear && (m-1) === calCurrentMonth) {
+      porDia[d] = (porDia[d] || 0) + 1;
+    }
+  });
+
+  // Primeiro dia da semana do mês (0=Dom, 1=Seg, ...)
+  const firstDay = new Date(calCurrentYear, calCurrentMonth, 1).getDay();
+  const daysInMonth = new Date(calCurrentYear, calCurrentMonth+1, 0).getDate();
+
+  // Hoje?
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === calCurrentYear && today.getMonth() === calCurrentMonth;
+  const todayDay = today.getDate();
+
+  const weekdays = ['D','S','T','Q','Q','S','S'];
+  let html = '<div class="cal-grid">';
+  weekdays.forEach(w => { html += `<div class="cal-weekday">${w}</div>`; });
+  // Espaços vazios antes do primeiro dia
+  for (let i = 0; i < firstDay; i++) {
+    html += `<div class="cal-day empty"></div>`;
+  }
+  // Dias do mês
+  for (let d = 1; d <= daysInMonth; d++) {
+    const count = porDia[d] || 0;
+    const isToday = isCurrentMonth && d === todayDay;
+    const cls = ['cal-day'];
+    if (isToday) cls.push('today');
+    if (count > 0) cls.push('has-data');
+    const marks = count > 0
+      ? '<div class="cal-day-marks">' + Array(Math.min(count, 6)).fill('<span class="cal-day-mark"></span>').join('') + '</div>'
+      : '';
+    const onclick = count > 0
+      ? `onclick="filtrarPorDia(${calCurrentYear},${calCurrentMonth+1},${d})"`
+      : '';
+    html += `<div class="${cls.join(' ')}" ${onclick}>
+      <div class="cal-day-num">${d}</div>
+      ${marks}
+    </div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function changeCalMonth(delta) {
+  calCurrentMonth += delta;
+  if (calCurrentMonth < 0) { calCurrentMonth = 11; calCurrentYear--; }
+  if (calCurrentMonth > 11) { calCurrentMonth = 0; calCurrentYear++; }
+  renderCalendar();
+}
+
+function filtrarPorDia(year, month, day) {
+  // Filtra dashboard pelo dia específico (período custom de 1 dia)
+  const m = String(month).padStart(2,'0');
+  const d = String(day).padStart(2,'0');
+  const iso = `${year}-${m}-${d}`;
+  cnfFilter.period = 'custom';
+  cnfFilter.start = iso;
+  cnfFilter.end = iso;
+  cnfFilterActive = true;
+  goCnfDashboard();
+  setTimeout(() => {
+    document.getElementById('cnfFilterStart').value = iso;
+    document.getElementById('cnfFilterEnd').value = iso;
+    document.getElementById('cnfFilterCustom').classList.add('active');
+    document.getElementById('cnfFilterLabel').textContent = fmtDate(iso);
+    renderPeriodOptions('cnfFilterOptions', 'custom', 'setCnfFilter');
+    renderCnf();
+  }, 100);
+}
+
+// Template do conteúdo padrão da quinzena (usado pra restaurar após busca)
+function getCnfQuinzenaHTML() {
+  return `
+    <div class="form-paper" style="margin-bottom:14px;">
+      <div class="form-content">
+        <div class="section-bar">
+          <span>Período Selecionado</span>
+          <span class="bar-meta" id="cnfTotalQuinzena">R$ 0,00</span>
+        </div>
+        <table class="field-table">
+          <tr class="row-2">
+            <td><div class="cell">
+              <span class="cell-label">Atendimentos no Período</span>
+              <input type="text" id="cnfCountAtend" readonly placeholder="0">
+            </div></td>
+            <td><div class="cell">
+              <span class="cell-label">Notas Fiscais</span>
+              <input type="text" id="cnfCountNotas" readonly placeholder="0">
+            </div></td>
+          </tr>
+          <tr class="row-2">
+            <td><div class="cell">
+              <span class="cell-label">Km Rodados</span>
+              <input type="text" id="cnfTotKm" readonly placeholder="0 km">
+            </div></td>
+            <td><div class="cell">
+              <span class="cell-label">Total Despesas</span>
+              <input type="text" id="cnfTotGeral" readonly placeholder="R$ 0,00">
+            </div></td>
+          </tr>
+        </table>
+
+        <div class="section-bar">
+          <span>Atendimentos do Período</span>
+          <span class="bar-meta" id="atendQuinzenaCount">0</span>
+        </div>
+        <div id="atendQuinzenaList"></div>
+
+        <div class="section-bar">
+          <span>Todas as Despesas</span>
+          <span class="bar-meta" id="despesasQuinzenaCount">0 notas</span>
+        </div>
+        <div class="despesa-row header">
+          <div>Valor</div>
+          <div>Origem</div>
+          <div>Comprov.</div>
+          <div>Cat./Obs.</div>
+        </div>
+        <div id="despesasQuinzenaList"></div>
+      </div>
+    </div>`;
+}
+
+function renderCnfSearchResults(searchTerm) {
+  document.getElementById('cnfCycleRange').textContent = `— resultados da busca —`;
+
+  // Filtra todos atendimentos
+  const filtered = atendimentos.filter(a => {
+    const haystack = [
+      a.cliente || '',
+      a.os || '',
+      a.caso || '',
+      a.obs || '',
+      fmtDate(a.data) || ''
+    ].join(' ').toLowerCase();
+    return haystack.includes(searchTerm);
+  });
+
+  const content = document.getElementById('cnfContent');
+  if (filtered.length === 0) {
+    content.innerHTML = `
+      <div class="form-paper" style="margin-bottom:14px;">
+        <div class="form-content">
+          <div class="section-bar">
+            <span>Resultados</span>
+            <span class="bar-meta">0 encontrados</span>
+          </div>
+          <div class="no-results" style="padding:40px 16px;">
+            <div class="no-results-icon">⌕</div>
+            nenhum atendimento encontrado para<br><b>"${searchTerm}"</b>
+          </div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Total dos resultados
+  const totalRes = filtered.reduce((s,a) => s + totalDespesas(a), 0);
+  const totalNotasRes = filtered.reduce((s,a) => s + (a.despesas||[]).length, 0);
+
+  // Ordena por data desc
+  const sorted = [...filtered].sort((a,b) =>
+    (b.data||'').localeCompare(a.data||'') || (b.criadoEm||'').localeCompare(a.criadoEm||'')
+  );
+
+  // Agrupa por data
+  const grupos = {};
+  sorted.forEach(a => {
+    const key = a.data || 'sem-data';
+    if (!grupos[key]) grupos[key] = [];
+    grupos[key].push(a);
+  });
+  const meses = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  const diasSemana = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const chaves = Object.keys(grupos).sort((a,b) => b.localeCompare(a));
+
+  const gruposHTML = chaves.map(dataKey => {
+    const grupoAtend = grupos[dataKey];
+    const totalGrupo = grupoAtend.reduce((s,a) => s + totalDespesas(a), 0);
+
+    let dateHeader;
+    if (dataKey === 'sem-data') {
+      dateHeader = `
+        <div class="date-group-head">
+          <div><span class="date-label">Sem data</span></div>
+          <div class="date-meta">${grupoAtend.length} ${grupoAtend.length===1?'atend.':'atends.'} · R$ ${fmt(totalGrupo)}</div>
+        </div>`;
+    } else {
+      const [y, m, d] = dataKey.split('-');
+      const dateObj = new Date(parseInt(y), parseInt(m)-1, parseInt(d));
+      const today = new Date();
+      const yest = new Date(); yest.setDate(today.getDate()-1);
+      const isToday = dateObj.toDateString() === today.toDateString();
+      const isYesterday = dateObj.toDateString() === yest.toDateString();
+      let label;
+      if (isToday) label = 'Hoje';
+      else if (isYesterday) label = 'Ontem';
+      else label = `${diasSemana[dateObj.getDay()]}, ${parseInt(d)} de ${meses[parseInt(m)-1].toLowerCase()}`;
+
+      dateHeader = `
+        <div class="date-group-head">
+          <div>
+            <span class="date-day">${parseInt(d)}/${m}</span>
+            <span class="date-label">${label}</span>
+          </div>
+          <div class="date-meta">${grupoAtend.length} ${grupoAtend.length===1?'atend.':'atends.'} · R$ ${fmt(totalGrupo)}</div>
+        </div>`;
+    }
+
+    const cards = grupoAtend.map(a => {
+      const total = totalDespesas(a);
+      return `
+        <div class="atend-card" onclick="goDetail('${a.id}')">
+          <button class="atend-card-print" onclick="event.stopPropagation();imprimirAtendimento('${a.id}')" title="Imprimir/PDF">📄</button>
+          <div class="atend-card-top">
+            <div>
+              <div class="atend-cli">${a.cliente || '— sem cliente —'}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-faint);margin-top:2px;letter-spacing:0.1em;">${a.caso ? 'SA: '+a.caso : '—'}</div>
+            </div>
+            <div class="atend-os">${a.os ? 'Nº '+a.os : '— —'}</div>
+          </div>
+          <div class="atend-card-body">
+            <div class="atend-meta-item"><div class="lab">H. Trab</div><div class="val">${a.horasTrab || '—'}</div></div>
+            <div class="atend-meta-item"><div class="lab">Km</div><div class="val">${a.km || '—'}</div></div>
+            <div class="atend-meta-item"><div class="lab">Despesas</div><div class="val">R$ ${fmt(total)}</div></div>
+          </div>
+        </div>`;
+    }).join('');
+    return `<div class="date-group">${dateHeader}${cards}</div>`;
+  }).join('');
+
+  content.innerHTML = `
+    <div class="form-paper" style="margin-bottom:14px;">
+      <div class="form-content">
+        <div class="section-bar">
+          <span>Resultados da Busca</span>
+          <span class="bar-meta">${filtered.length} ${filtered.length===1?'atend.':'atends.'} · ${totalNotasRes} ${totalNotasRes===1?'nota':'notas'} · R$ ${fmt(totalRes)}</span>
+        </div>
+        <div style="padding:14px;">
+          ${gruposHTML}
+        </div>
+      </div>
+    </div>`;
+}
+
+function clearCnfSearch() {
+  const input = document.getElementById('cnfSearchInput');
+  if (input) {
+    input.value = '';
+    input.focus();
+    renderCnf();
+  }
+}
+
+function renderCnf() {
+  const searchEl = document.getElementById('cnfSearchInput');
+  const searchTerm = (searchEl ? searchEl.value : '').trim().toLowerCase();
+  const clearBtn = document.getElementById('cnfSearchClearBtn');
+  if (clearBtn) clearBtn.classList.toggle('visible', !!searchTerm);
+
+  // Esconde o filtro de período quando há busca (busca é global)
+  const filterEl = document.getElementById('cnfFilterEl');
+  if (filterEl) filterEl.style.display = searchTerm ? 'none' : '';
+
+  // Se há busca ativa, mostra resultados (qualquer data); senão, mostra o período filtrado
+  if (searchTerm) {
+    renderCnfSearchResults(searchTerm);
+    return;
+  }
+
+  // Se filtro NÃO foi ativado (tela inicial), mostra mensagem de instrução
+  if (!cnfFilterActive) {
+    document.getElementById('cnfCycleRange').textContent = '— escolha um filtro acima —';
+    // Esconde ações de PDF (não faz sentido gerar PDF vazio)
+    const actions = document.getElementById('cnfActions');
+    if (actions) actions.style.display = 'none';
+    const content = document.getElementById('cnfContent');
+    content.innerHTML = `
+      <div class="form-paper" style="margin-bottom:14px;">
+        <div class="form-content">
+          <div class="section-bar">
+            <span>Aguardando Filtro</span>
+            <span class="bar-meta">—</span>
+          </div>
+          <div class="no-results" style="padding:50px 20px;">
+            <div class="no-results-icon">⌕</div>
+            <div style="font-size:14px;margin-bottom:8px;font-style:normal;color:var(--ink);">
+              Selecione um <b>período</b>, um <b>técnico</b><br>ou faça uma <b>busca</b> para visualizar
+            </div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:var(--ink-faint);margin-top:14px;">
+              ${atendimentos.length} ${atendimentos.length===1?'atendimento cadastrado':'atendimentos cadastrados'} no sistema
+            </div>
+          </div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Mostra ações de PDF de novo
+  const actions = document.getElementById('cnfActions');
+  if (actions) actions.style.display = '';
+
+  // Restaura conteúdo padrão (caso tenha sido substituído pela busca/mensagem)
+  const content = document.getElementById('cnfContent');
+  if (content && !document.getElementById('cnfCountAtend')) {
+    content.innerHTML = getCnfQuinzenaHTML();
+  }
+
+  // Usa filtro de período em vez de quinzena fixa
+  const range = getPeriodRange(cnfFilter.period, cnfFilter.start, cnfFilter.end);
+  const periodLabel = formatPeriodLabel(cnfFilter.period, cnfFilter.start, cnfFilter.end);
+  document.getElementById('cnfCycleRange').textContent = `— ${periodLabel} —`;
+
+  // Atendimentos do período (e do técnico filtrado, se houver) + filtros extras
+  const atendCycle = atendimentos.filter(a =>
+    inPeriod(a.data, range) &&
+    (!tecnicoFiltro || a.tecnico === tecnicoFiltro) &&
+    passaFiltrosExtras(a)
+  );
+
+  // Despesas
+  const despesasCycle = [];
+  atendCycle.forEach(a => {
+    (a.despesas || []).forEach(n => {
+      despesasCycle.push({ ...n, _atendId: a.id, _cliente: a.cliente, _os: a.os, _atendData: a.data });
+    });
+  });
+
+  const totGeral = despesasCycle.reduce((s,n) => s + (parseFloat(n.valor)||0), 0);
+  const totKm = atendCycle.reduce((s,a) => s + (parseFloat(a.km)||0), 0);
+
+  document.getElementById('cnfCountAtend').value = String(atendCycle.length);
+  document.getElementById('cnfCountNotas').value = String(despesasCycle.length);
+  document.getElementById('cnfTotKm').value = totKm > 0 ? `${totKm} km` : '0 km';
+  document.getElementById('cnfTotGeral').value = `R$ ${fmt(totGeral)}`;
+  document.getElementById('cnfTotalQuinzena').textContent = `R$ ${fmt(totGeral)}`;
+
+  // Lista de atendimentos da quinzena
+  document.getElementById('atendQuinzenaCount').textContent =
+    atendCycle.length === 0 ? '0' :
+    atendCycle.length === 1 ? '1 atendimento' :
+    `${atendCycle.length} atendimentos`;
+
+  const atendList = document.getElementById('atendQuinzenaList');
+  if (atendCycle.length === 0) {
+    atendList.innerHTML = `<div class="despesa-row empty-row"><div>nenhum atendimento nesta quinzena</div></div>`;
+  } else {
+    const sortedAtend = [...atendCycle].sort((a,b) => (b.data||'').localeCompare(a.data||''));
+    atendList.innerHTML = sortedAtend.map(a => {
+      const totalA = (a.despesas||[]).reduce((s,n)=>s+(parseFloat(n.valor)||0),0);
+      const ndesp = (a.despesas||[]).length;
+      return `
+        <div style="padding:10px 12px;border-bottom:1.5px solid var(--line);display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;cursor:pointer;" onclick="goDetail('${a.id}')">
+          <div style="min-width:0;">
+            <div style="font-size:14px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.cliente || '— sem cliente —'}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-faint);letter-spacing:0.05em;margin-top:2px;">
+              ${fmtDate(a.data)} · ${a.os ? 'Nº '+a.os : 'sem nº'} · ${ndesp} nota${ndesp!==1?'s':''}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:13px;font-weight:600;">R$ ${fmt(totalA)}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--ink-faint);margin-top:2px;letter-spacing:0.1em;">${a.km ? a.km+' km' : '—'}</div>
+          </div>
+          <button onclick="event.stopPropagation();imprimirAtendimento('${a.id}')" title="Imprimir/PDF" style="background:var(--paper);border:1.5px solid var(--line);padding:6px 10px;font-size:13px;cursor:pointer;box-shadow:1px 1px 0 var(--line);">📄</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Lista de todas as despesas da quinzena
+  document.getElementById('despesasQuinzenaCount').textContent =
+    despesasCycle.length === 0 ? '0 notas' :
+    despesasCycle.length === 1 ? '1 nota' :
+    `${despesasCycle.length} notas`;
+
+  const list = document.getElementById('despesasQuinzenaList');
+  if (despesasCycle.length === 0) {
+    list.innerHTML = `<div class="despesa-row empty-row"><div>nenhuma despesa registrada</div></div>`;
+  } else {
+    const sorted = [...despesasCycle].sort((a,b) => (b.data||'').localeCompare(a.data||''));
+    list.innerHTML = sorted.map(n => {
+      let comp;
+      if (n.imagem) {
+        const src = imgSrc(n.imagem);
+        if (src) comp = `<img src="${src}" onclick="event.stopPropagation();viewImg('${n.imagem}')">`;
+        else comp = `<span class="icon">🖼</span>`;
+      }
+      else if (n.arquivo) comp = `<span class="icon">📎</span>`;
+      else comp = `<span class="icon" style="opacity:0.3;">—</span>`;
+      const origem = `${n._cliente || '—'}${n._os ? ' / Nº '+n._os : ''}`;
+      return `
+        <div class="despesa-row" onclick="goDetail('${n._atendId}')">
+          <div class="d-valor">${fmt(parseFloat(n.valor)||0)}</div>
+          <div class="d-meio" style="font-size:11px;line-height:1.2;">${origem}</div>
+          <div class="d-comp">${comp}</div>
+          <div class="d-obs"><span class="cat-bullet small" style="background:${catColor(n.categoria)};"></span> ${catLabel(n.categoria)}${n.obs?' · '+n.obs:''}</div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+// Imprime/exporta PDF de um atendimento específico (sem precisar abrir o detalhe)
+async function imprimirAtendimento(id) {
+  const a = atendimentos.find(x => x.id === id);
+  if (!a) { alert('Atendimento não encontrado'); return; }
+  // Define como current e chama o exportPdf existente
+  const prevCurrent = currentAtend;
+  currentAtend = a;
+  try {
+    await exportPdf();
+  } catch (e) {
+    console.error(e);
+    alert('Erro ao gerar PDF');
+  }
+  currentAtend = prevCurrent;
+}
+
+// CSV/Excel do período (despesas)
+function exportCnfCsv() {
+  const range = getPeriodRange(cnfFilter.period, cnfFilter.start, cnfFilter.end);
+  const periodLabel = formatPeriodLabel(cnfFilter.period, cnfFilter.start, cnfFilter.end);
+  const atendCycle = atendimentos.filter(a =>
+    inPeriod(a.data, range) && (!tecnicoFiltro || a.tecnico === tecnicoFiltro) && passaFiltrosExtras(a)
+  );
+  if (atendCycle.length === 0) { alert('Nenhum atendimento no período'); return; }
+
+  // Cabeçalho CSV
+  const sep = ';'; // separador comum no Excel BR
+  const rows = [];
+  rows.push([
+    'Data Atend', 'Técnico', 'Cliente', 'OT', 'SA',
+    'Chegada', 'Saída', 'H. Trab', 'H. Desloc', 'Km',
+    'Data Despesa', 'Valor', 'Meio Pgto', 'Categoria', 'Observação', 'Tem Foto'
+  ].join(sep));
+
+  atendCycle.forEach(a => {
+    const desps = a.despesas || [];
+    if (desps.length === 0) {
+      // Atendimento sem despesa: linha única
+      rows.push([
+        fmtDate(a.data), a.tecnico||'', csvEscape(a.cliente||''), a.os||'', a.caso||'',
+        a.chegada||'', a.saida||'', a.horasTrab||'', a.horasDesl||'', a.km||'',
+        '', '', '', '', '', ''
+      ].join(sep));
+    } else {
+      desps.forEach(n => {
+        rows.push([
+          fmtDate(a.data), a.tecnico||'', csvEscape(a.cliente||''), a.os||'', a.caso||'',
+          a.chegada||'', a.saida||'', a.horasTrab||'', a.horasDesl||'', a.km||'',
+          fmtDate(n.data), formatBrlNumber(n.valor),
+          csvEscape(n.meio||''), csvEscape(catLabel(n.categoria)),
+          csvEscape(n.obs||''), n.imagem ? 'Sim' : 'Não'
+        ].join(sep));
+      });
+    }
+  });
+
+  // BOM pro Excel reconhecer UTF-8 acentos
+  const bom = '\uFEFF';
+  const csvContent = bom + rows.join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  const safeLabel = periodLabel.replace(/[^\w\-]/g,'_').slice(0,30);
+  link.download = `sirona-${safeLabel}-${todayISO()}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('CSV exportado');
+}
+
+function csvEscape(str) {
+  if (!str) return '';
+  const s = String(str);
+  // Se contém ; ou aspas ou quebra de linha, envolve em aspas
+  if (s.includes(';') || s.includes('"') || s.includes('\n')) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+function formatBrlNumber(v) {
+  // Excel BR aceita números com vírgula decimal
+  const n = parseFloat(v) || 0;
+  return n.toFixed(2).replace('.', ',');
+}
+
+// PDF da quinzena (todas despesas dos atendimentos da quinzena)
+async function exportCnfPdf() {
+  const range = getPeriodRange(cnfFilter.period, cnfFilter.start, cnfFilter.end);
+  const periodLabel = formatPeriodLabel(cnfFilter.period, cnfFilter.start, cnfFilter.end);
+  const atendCycle = atendimentos.filter(a =>
+    inPeriod(a.data, range) && (!tecnicoFiltro || a.tecnico === tecnicoFiltro) && passaFiltrosExtras(a)
+  );
+  // Pré-carrega imagens do IndexedDB pro cache antes de gerar o PDF
+  const imgRefs = [];
+  atendCycle.forEach(a => (a.despesas||[]).forEach(n => { if (n.imagem) imgRefs.push(n.imagem); }));
+  await Promise.all(imgRefs.map(r => loadImageToCache(r)));
+  const allDespesas = [];
+  atendCycle.forEach(a => {
+    (a.despesas || []).forEach(n => {
+      allDespesas.push({ ...n, _atendId: a.id, _cliente: a.cliente, _os: a.os, _atendData: a.data });
+    });
+  });
+  if (atendCycle.length === 0) { alert('Nenhum atendimento no período selecionado'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const pageW = 210;
+  const total = allDespesas.reduce((s,n) => s + (parseFloat(n.valor)||0), 0);
+  const totKm = atendCycle.reduce((s,a) => s + (parseFloat(a.km)||0), 0);
+
+  // watermark
+  doc.setTextColor(245,225,225);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(80);
+  doc.text('SIRONA', 105, 160, { align: 'center', angle: -25 });
+
+  doc.setDrawColor(26,26,26);
+  doc.setLineWidth(0.6);
+  doc.rect(10, 10, pageW-20, 277);
+
+  doc.setTextColor(26,26,26);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.text('SIRONA · ESCRITÓRIO — CONTROLE DE NOTAS FISCAIS', 105, 18, { align: 'center' });
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(14);
+  doc.text('RELATÓRIO DO PERÍODO', 105, 25, { align: 'center' });
+  doc.setFontSize(10);
+  doc.setFont('helvetica','normal');
+  doc.text(`${periodLabel}`, 105, 32, { align: 'center' });
+  doc.setLineWidth(0.4);
+  doc.line(10, 36, pageW-10, 36);
+
+  // Resumo
+  let y = 36;
+  const colW = (pageW - 20) / 2;
+  doc.setFillColor(26,26,26);
+  doc.rect(10, y, pageW-20, 7, 'F');
+  doc.setTextColor(250,250,247); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('RESUMO DO PERÍODO', 12, y+5);
+  doc.text(`TOTAL: R$ ${fmt(total)}`, pageW-12, y+5, { align:'right' });
+  doc.setTextColor(26,26,26);
+  y += 7;
+
+  doc.line(10, y, pageW-10, y);
+  doc.line(10+colW, y, 10+colW, y+12);
+  doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+  doc.text('ATENDIMENTOS', 12, y+4);
+  doc.text('NOTAS FISCAIS', 12+colW, y+4);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(26,26,26);
+  doc.text(`${atendCycle.length}`, 12, y+10);
+  doc.text(`${allDespesas.length}`, 12+colW, y+10);
+  y += 12;
+
+  doc.line(10, y, pageW-10, y);
+  doc.line(10+colW, y, 10+colW, y+12);
+  doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+  doc.text('KM RODADOS', 12, y+4);
+  doc.text('TOTAL DESPESAS', 12+colW, y+4);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(26,26,26);
+  doc.text(totKm > 0 ? `${totKm} km` : '—', 12, y+10);
+  doc.text(`R$ ${fmt(total)}`, 12+colW, y+10);
+  y += 12;
+
+  // Por categoria
+  const cats = {};
+  allDespesas.forEach(n => { cats[n.categoria] = (cats[n.categoria]||0) + (parseFloat(n.valor)||0); });
+  if (Object.keys(cats).length > 0) {
+    doc.line(10, y, pageW-10, y);
+    doc.setFillColor(243,242,238);
+    doc.rect(10, y, pageW-20, 6, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(80,80,80);
+    doc.text('POR CATEGORIA', 12, y+4);
+    doc.setTextColor(26,26,26);
+    y += 6;
+    doc.line(10, y, pageW-10, y);
+
+    Object.entries(cats).sort((a,b)=>b[1]-a[1]).forEach(([cat, v]) => {
+      doc.setFont('helvetica','normal'); doc.setFontSize(10);
+      doc.text(CAT_LABELS[cat]||cat, 14, y+5);
+      doc.setFont('helvetica','bold');
+      doc.text(`R$ ${fmt(v)}`, pageW-14, y+5, {align:'right'});
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(140,140,140);
+      doc.text(`${((v/total)*100).toFixed(1)}%`, pageW-40, y+5, {align:'right'});
+      doc.setTextColor(26,26,26);
+      y += 7;
+      doc.line(10, y, pageW-10, y);
+    });
+  }
+
+  // Detalhado por ATENDIMENTO
+  if (y > 230) { doc.addPage(); doc.rect(10,10,pageW-20,277); y = 15; }
+  y += 4;
+  doc.setFillColor(26,26,26);
+  doc.rect(10, y, pageW-20, 7, 'F');
+  doc.setTextColor(250,250,247); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('ATENDIMENTOS DETALHADOS', 12, y+5);
+  doc.setTextColor(26,26,26);
+  y += 7;
+
+  const sortedAtend = [...atendCycle].sort((a,b) => (a.data||'').localeCompare(b.data||''));
+  sortedAtend.forEach(a => {
+    if (y + 16 > 280) { doc.addPage(); doc.rect(10,10,pageW-20,277); y = 15; }
+    const tA = (a.despesas||[]).reduce((s,n)=>s+(parseFloat(n.valor)||0),0);
+
+    // Cabeçalho do atendimento
+    doc.setFillColor(243,242,238);
+    doc.rect(10, y, pageW-20, 9, 'F');
+    doc.line(10, y, pageW-10, y);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text(`${fmtDate(a.data)} · ${a.cliente || '—'}`, 12, y+6);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    doc.text(a.os ? `Nº ${a.os}` : '—', pageW/2 + 5, y+6);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text(`R$ ${fmt(tA)}`, pageW-12, y+6, {align:'right'});
+    y += 9;
+    doc.line(10, y, pageW-10, y);
+
+    // Despesas do atendimento
+    if (!a.despesas || a.despesas.length === 0) {
+      doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(140,140,140);
+      doc.text('sem despesas', 14, y+5);
+      doc.setTextColor(26,26,26);
+      y += 7;
+      doc.line(10, y, pageW-10, y);
+    } else {
+      const wData = 22, wCat = 35, wMeio = 50, wObs = 53, wVal = 30;
+      const xData = 10, xCat = xData+wData, xMeio = xCat+wCat, xObs = xMeio+wMeio, xVal = xObs+wObs;
+      a.despesas.forEach(n => {
+        if (y + 8 > 280) { doc.addPage(); doc.rect(10,10,pageW-20,277); y = 15; }
+        doc.line(xCat, y, xCat, y+8);
+        doc.line(xMeio, y, xMeio, y+8);
+        doc.line(xObs, y, xObs, y+8);
+        doc.line(xVal, y, xVal, y+8);
+        doc.setFont('helvetica','normal'); doc.setFontSize(8);
+        doc.text(fmtDate(n.data), xData+2, y+5);
+        doc.text(CAT_LABELS[n.categoria]||'—', xCat+2, y+5);
+        const meioT = (n.meio||'—').length > 22 ? (n.meio||'—').slice(0,20)+'…' : (n.meio||'—');
+        doc.text(meioT, xMeio+2, y+5);
+        const obsT = (n.obs||'').length > 25 ? (n.obs||'').slice(0,23)+'…' : (n.obs||'');
+        doc.text(obsT, xObs+2, y+5);
+        doc.setFont('helvetica','bold'); doc.setFontSize(9);
+        doc.text(`R$ ${fmt(parseFloat(n.valor)||0)}`, xVal+wVal-2, y+5, {align:'right'});
+        y += 8;
+        doc.line(10, y, pageW-10, y);
+      });
+    }
+    y += 3;
+  });
+
+  // Total final
+  if (y + 12 > 280) { doc.addPage(); doc.rect(10,10,pageW-20,277); y = 15; }
+  y += 2;
+  doc.setLineWidth(0.5);
+  doc.line(10, y, pageW-10, y);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11);
+  doc.text('TOTAL DO PERÍODO', 12, y+7);
+  doc.setFontSize(13);
+  doc.text(`R$ ${fmt(total)}`, pageW-12, y+7, {align:'right'});
+
+  // Comprovantes
+  const comImg = allDespesas.filter(n => n.imagem);
+  if (comImg.length > 0) {
+    doc.addPage();
+    doc.rect(10,10,pageW-20,277);
+    doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text('COMPROVANTES', 12, 18);
+    doc.line(10, 22, pageW-10, 22);
+    let yi = 30;
+    for (const n of comImg) {
+      if (yi > 220) { doc.addPage(); doc.rect(10,10,pageW-20,277); yi = 15; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(9);
+      const tag = `${n._cliente||'—'}${n._os?' / Nº '+n._os:''}`;
+      doc.text(`${fmtDate(n.data)} · ${tag} · R$ ${fmt(parseFloat(n.valor))}`, 12, yi);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(120,120,120);
+      doc.text(`${CAT_LABELS[n.categoria]||''} · ${n.meio||''} · ${n.obs||''}`, 12, yi+4);
+      doc.setTextColor(26,26,26);
+      yi += 8;
+      try {
+        const imgData = imgSrc(n.imagem);
+        if (imgData) {
+          const fmtImg = imgData.includes('image/png') ? 'PNG' : 'JPEG';
+          doc.addImage(imgData, fmtImg, 12, yi, 80, 60);
+          yi += 65;
+        } else {
+          yi += 6;
+        }
+      } catch (e) { yi += 6; }
+    }
+  }
+
+  const tot = doc.internal.getNumberOfPages();
+  for (let i=1; i<=tot; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7); doc.setTextColor(140,140,140);
+    doc.text(`pág ${i}/${tot}`, pageW-12, 295, {align:'right'});
+    doc.text(`gerado ${new Date().toLocaleString('pt-BR')}`, 12, 295);
+  }
+  const safeLabel = periodLabel.replace(/[^\w\-]/g,'_').slice(0,30);
+  doc.save(`sirona-${cnfFilter.period}-${safeLabel}-${todayISO()}.pdf`);
+  toast('pdf gerado');
+}
+
+// HISTÓRICO
+function openHistorico() {
+  const all = getAllDespesas();
+  const totalGeral = all.reduce((s,n) => s + (parseFloat(n.valor)||0), 0);
+
+  document.getElementById('historicoSummary').innerHTML = `
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;opacity:0.5;">Total geral</div>
+      <div style="font-size:20px;font-weight:700;margin-top:4px;">R$ ${fmt(totalGeral)}</div>
+    </div>
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;opacity:0.5;">Notas cadastradas</div>
+      <div style="font-size:20px;font-weight:700;margin-top:4px;">${all.length}</div>
+    </div>
+  `;
+
+  // Agrupa por quinzena
+  const grupos = {};
+  all.forEach(n => {
+    const k = getQuinzenaKey(n.data);
+    if (!k) return;
+    if (!grupos[k]) grupos[k] = [];
+    grupos[k].push(n);
+  });
+  const chaves = Object.keys(grupos).sort().reverse();
+
+  const list = document.getElementById('historicoList');
+  if (chaves.length === 0) {
+    list.innerHTML = `<div class="empty">nenhuma nota cadastrada ainda</div>`;
+  } else {
+    list.innerHTML = chaves.map(key => {
+      const grupo = grupos[key].sort((a,b) => (b.data||'').localeCompare(a.data||''));
+      const totalQ = grupo.reduce((s,n) => s + (parseFloat(n.valor)||0), 0);
+      return `
+        <div style="margin-bottom:18px;">
+          <div style="border-bottom:1.5px solid var(--line);padding-bottom:6px;margin-bottom:8px;display:flex;justify-content:space-between;">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">${quinzenaLabel(key)}</span>
+            <span style="font-size:13px;font-weight:600;">R$ ${fmt(totalQ)}</span>
+          </div>
+          ${grupo.map(n => {
+            const orig = `${n._cliente||'—'}${n._os?' / Nº '+n._os:''}`;
+            return `
+              <div style="display:grid;grid-template-columns:50px 1fr auto;gap:8px;padding:8px 0;border-bottom:1px dashed rgba(0,0,0,0.1);align-items:center;">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-faint);">${fmtDate(n.data).slice(0,5)}</div>
+                <div>
+                  <div style="font-size:13px;line-height:1.2;">${orig}</div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.1em;margin-top:2px;">${CAT_LABELS[n.categoria]||'—'}</div>
+                </div>
+                <div style="font-size:13px;font-weight:600;text-align:right;">R$ ${fmt(parseFloat(n.valor)||0)}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }).join('');
+  }
+
+  document.getElementById('modalHistorico').classList.add('active');
+}
+function closeHistorico() {
+  document.getElementById('modalHistorico').classList.remove('active');
+}
+
+async function exportHistoricoPdf() {
+  const all = getAllDespesas();
+  if (all.length === 0) { alert('Nenhuma despesa cadastrada'); return; }
+
+  // Pré-carrega imagens
+  const imgRefs = all.filter(n => n.imagem).map(n => n.imagem);
+  await Promise.all(imgRefs.map(r => loadImageToCache(r)));
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const pageW = 210;
+  const total = all.reduce((s,n) => s + (parseFloat(n.valor)||0), 0);
+  const sorted = [...all].sort((a,b) => (a.data||'').localeCompare(b.data||''));
+  const dataMin = sorted[0].data, dataMax = sorted[sorted.length-1].data;
+
+  doc.setTextColor(245,225,225);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(80);
+  doc.text('SIRONA', 105, 160, { align: 'center', angle: -25 });
+
+  doc.setDrawColor(26,26,26);
+  doc.setLineWidth(0.6);
+  doc.rect(10, 10, pageW-20, 277);
+
+  doc.setTextColor(26,26,26);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.text('SIRONA · CNF — HISTÓRICO COMPLETO', 105, 18, { align: 'center' });
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(14);
+  doc.text('TODAS AS DESPESAS REGISTRADAS', 105, 25, { align: 'center' });
+  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  doc.text(`${fmtDate(dataMin)} → ${fmtDate(dataMax)}`, 105, 32, { align: 'center' });
+  doc.line(10, 36, pageW-10, 36);
+
+  let y = 36;
+  doc.setFillColor(26,26,26);
+  doc.rect(10, y, pageW-20, 7, 'F');
+  doc.setTextColor(250,250,247); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('TOTAL GERAL', 12, y+5);
+  doc.text(`R$ ${fmt(total)} · ${all.length} notas`, pageW-12, y+5, {align:'right'});
+  doc.setTextColor(26,26,26);
+  y += 7;
+
+  // Por quinzena
+  const grupos = {};
+  all.forEach(n => {
+    const k = getQuinzenaKey(n.data);
+    if (!k) return;
+    if (!grupos[k]) grupos[k] = [];
+    grupos[k].push(n);
+  });
+  const chaves = Object.keys(grupos).sort();
+
+  chaves.forEach(key => {
+    const grupo = grupos[key].sort((a,b) => (a.data||'').localeCompare(b.data||''));
+    const totalQ = grupo.reduce((s,n) => s + (parseFloat(n.valor)||0), 0);
+
+    if (y + 20 > 280) { doc.addPage(); doc.rect(10,10,pageW-20,277); y = 15; }
+    doc.setFillColor(243,242,238);
+    doc.rect(10, y, pageW-20, 8, 'F');
+    doc.line(10, y, pageW-10, y);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text(quinzenaLabel(key), 12, y+5.5);
+    doc.text(`R$ ${fmt(totalQ)} · ${grupo.length} nota${grupo.length>1?'s':''}`, pageW-12, y+5.5, {align:'right'});
+    y += 8;
+    doc.line(10, y, pageW-10, y);
+
+    grupo.forEach(n => {
+      if (y + 7 > 280) { doc.addPage(); doc.rect(10,10,pageW-20,277); y = 15; }
+      doc.setFont('helvetica','normal'); doc.setFontSize(8);
+      doc.text(fmtDate(n.data), 12, y+5);
+      const orig = `${n._cliente||'—'}${n._os?' / Nº '+n._os:''}`;
+      const oTrunc = orig.length > 35 ? orig.slice(0,33)+'…' : orig;
+      doc.text(oTrunc, 35, y+5);
+      doc.setFontSize(7); doc.setTextColor(120,120,120);
+      doc.text(CAT_LABELS[n.categoria]||'—', 110, y+5);
+      doc.setTextColor(26,26,26);
+      doc.setFont('helvetica','bold'); doc.setFontSize(9);
+      doc.text(`R$ ${fmt(parseFloat(n.valor)||0)}`, pageW-12, y+5, {align:'right'});
+      y += 7;
+      doc.line(10, y, pageW-10, y);
+    });
+    y += 4;
+  });
+
+  const tot = doc.internal.getNumberOfPages();
+  for (let i=1; i<=tot; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7); doc.setTextColor(140,140,140);
+    doc.text(`pág ${i}/${tot}`, pageW-12, 295, {align:'right'});
+    doc.text(`gerado ${new Date().toLocaleString('pt-BR')}`, 12, 295);
+  }
+  doc.save(`sirona-cnf-historico-completo-${todayISO()}.pdf`);
+  toast('pdf gerado');
+}
+
+// ============ SIGNATURE PAD ============
+let sigCurrentType = null; // 'tecnico' | 'backoffice'
+let sigDrawing = false;
+let sigCtx = null;
+let sigHasStroke = false;
+let sigLastX = 0, sigLastY = 0;
+
+function openSigPad(tipo) {
+  if (!currentAtend) return;
+  sigCurrentType = tipo;
+  document.getElementById('sigModalTitle').textContent =
+    tipo === 'tecnico' ? 'Assinatura · Técnico' : 'Assinatura · Backoffice';
+
+  const canvas = document.getElementById('sigpadCanvas');
+  sigCtx = canvas.getContext('2d');
+  sigCtx.fillStyle = '#ffffff';
+  sigCtx.fillRect(0, 0, canvas.width, canvas.height);
+  sigCtx.strokeStyle = '#0a0a0a';
+  sigCtx.lineWidth = 3;
+  sigCtx.lineCap = 'round';
+  sigCtx.lineJoin = 'round';
+  sigHasStroke = false;
+  document.getElementById('sigpadWrap').classList.remove('has-stroke');
+
+  // Carrega assinatura existente, se houver
+  const sigData = currentAtend.assinaturas && currentAtend.assinaturas[tipo];
+  if (sigData && sigData.imagem) {
+    const img = new Image();
+    img.onload = () => {
+      sigCtx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      sigHasStroke = true;
+      document.getElementById('sigpadWrap').classList.add('has-stroke');
+    };
+    img.src = sigData.imagem;
+  }
+
+  document.getElementById('modalSig').classList.add('active');
+  setTimeout(setupSigEvents, 50);
+}
+
+function setupSigEvents() {
+  const canvas = document.getElementById('sigpadCanvas');
+  const wrap = document.getElementById('sigpadWrap');
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+    return {
+      x: x * (canvas.width / rect.width),
+      y: y * (canvas.height / rect.height)
+    };
+  }
+
+  function start(e) {
+    e.preventDefault();
+    sigDrawing = true;
+    const p = getPos(e);
+    sigLastX = p.x; sigLastY = p.y;
+    sigCtx.beginPath();
+    sigCtx.moveTo(p.x, p.y);
+  }
+  function move(e) {
+    if (!sigDrawing) return;
+    e.preventDefault();
+    const p = getPos(e);
+    sigCtx.lineTo(p.x, p.y);
+    sigCtx.stroke();
+    sigLastX = p.x; sigLastY = p.y;
+    if (!sigHasStroke) {
+      sigHasStroke = true;
+      wrap.classList.add('has-stroke');
+    }
+  }
+  function end(e) {
+    if (!sigDrawing) return;
+    e.preventDefault();
+    sigDrawing = false;
+  }
+
+  // Remove listeners antigos
+  canvas.ontouchstart = start;
+  canvas.ontouchmove = move;
+  canvas.ontouchend = end;
+  canvas.onmousedown = start;
+  canvas.onmousemove = move;
+  canvas.onmouseup = end;
+  canvas.onmouseleave = end;
+}
+
+function clearSignature() {
+  if (!sigCtx) return;
+  const canvas = document.getElementById('sigpadCanvas');
+  sigCtx.fillStyle = '#ffffff';
+  sigCtx.fillRect(0, 0, canvas.width, canvas.height);
+  sigHasStroke = false;
+  document.getElementById('sigpadWrap').classList.remove('has-stroke');
+}
+
+function saveSignature() {
+  if (!sigHasStroke) {
+    if (!confirm('Você não desenhou nada. Salvar assinatura em branco (remover)?')) return;
+  }
+  const canvas = document.getElementById('sigpadCanvas');
+  const dataUrl = sigHasStroke ? canvas.toDataURL('image/png') : null;
+
+  if (!currentAtend.assinaturas) currentAtend.assinaturas = {};
+  if (dataUrl) {
+    currentAtend.assinaturas[sigCurrentType] = {
+      imagem: dataUrl,
+      data: new Date().toISOString(),
+      assinante: sigCurrentType === 'tecnico' ? 'Técnico' : 'Backoffice'
+    };
+  } else {
+    delete currentAtend.assinaturas[sigCurrentType];
+  }
+  saveAtendimento(false);
+  renderSignatures();
+  closeSigPad();
+  toast(dataUrl ? 'assinado' : 'assinatura removida');
+}
+
+function closeSigPad() {
+  document.getElementById('modalSig').classList.remove('active');
+  sigCurrentType = null;
+}
+
+function renderSignatures() {
+  const a = currentAtend;
+  if (!a) return;
+  const sigs = a.assinaturas || {};
+
+  // Técnico
+  const sigT = sigs.tecnico;
+  const areaT = document.getElementById('sigTecArea');
+  if (!areaT) return;
+  const canvasT = document.getElementById('sigTecPreview');
+  const ctxT = canvasT.getContext('2d');
+  ctxT.clearRect(0, 0, canvasT.width, canvasT.height);
+  if (sigT && sigT.imagem) {
+    const img = new Image();
+    img.onload = () => ctxT.drawImage(img, 0, 0, canvasT.width, canvasT.height);
+    img.src = sigT.imagem;
+    areaT.classList.add('has-signature');
+    document.getElementById('sigTecStatus').textContent = '✓ assinado';
+    document.getElementById('sigTecStatus').classList.add('signed');
+    document.getElementById('sigTecMeta').textContent =
+      `assinado em ${new Date(sigT.data).toLocaleString('pt-BR')}`;
+  } else {
+    areaT.classList.remove('has-signature');
+    document.getElementById('sigTecStatus').textContent = '— sem assinatura —';
+    document.getElementById('sigTecStatus').classList.remove('signed');
+    document.getElementById('sigTecMeta').textContent = '';
+  }
+}
+
+// Sobrescreve renderDetail para também renderizar as assinaturas
+const _origRenderDetail = renderDetail;
+renderDetail = function() {
+  _origRenderDetail();
+  renderSignatures();
+};
+
+// ============ CONFIGURAÇÕES ============
+const CFG_KEY = 'sirona_config_v1';
+const QUALITY_PRESETS = {
+  padrao: { maxDim: 1600, jpegQuality: 0.85, label: 'Padrão', desc: '~400 KB · 1600px · qualidade 85%' },
+  alta: { maxDim: 2000, jpegQuality: 0.92, label: 'Alta', desc: '~800 KB · 2000px · qualidade 92% (recomendado)' },
+  maxima: { maxDim: 2400, jpegQuality: 0.95, label: 'Máxima', desc: '~1.5 MB · 2400px · qualidade 95%' }
+};
+const THEME_LABELS = {
+  claro: 'Claro',
+  escuro: 'Escuro',
+  auto: 'Automático'
+};
+
+let appConfig = JSON.parse(localStorage.getItem(CFG_KEY) || 'null') || {
+  theme: 'auto',
+  imageQuality: 'alta'
+};
+
+function saveConfig() {
+  localStorage.setItem(CFG_KEY, JSON.stringify(appConfig));
+}
+
+function applyTheme() {
+  let theme = appConfig.theme || 'auto';
+  let actual;
+  if (theme === 'auto') {
+    actual = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  } else {
+    actual = theme === 'escuro' ? 'dark' : 'light';
+  }
+  document.documentElement.setAttribute('data-theme', actual);
+  // Atualiza meta theme-color
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', actual === 'dark' ? '#0f0f0f' : '#1a1a1a');
+}
+
+// Re-aplica tema se sistema mudar (modo auto)
+if (window.matchMedia) {
+  try {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (appConfig.theme === 'auto') applyTheme();
+    });
+  } catch (e) { /* navegadores antigos */ }
+}
+
+function setTheme(themeKey) {
+  appConfig.theme = themeKey;
+  saveConfig();
+  applyTheme();
+  renderConfig();
+}
+
+function setImageQuality(qKey) {
+  appConfig.imageQuality = qKey;
+  saveConfig();
+  renderConfig();
+  toast(`qualidade ${QUALITY_PRESETS[qKey].label.toLowerCase()}`);
+}
+
+function goConfig() {
+  showScreen('screenConfig');
+  renderConfig();
+}
+
+function renderConfig() {
+  // Tema
+  const themes = [
+    { k: 'claro', l: 'Claro' },
+    { k: 'escuro', l: 'Escuro' },
+    { k: 'auto', l: 'Automático' }
+  ];
+  document.getElementById('themeOptions').innerHTML = themes.map(t =>
+    `<div class="period-opt ${appConfig.theme === t.k ? 'active' : ''}" onclick="setTheme('${t.k}')">${t.l}</div>`
+  ).join('');
+  document.getElementById('cfgThemeLabel').textContent = THEME_LABELS[appConfig.theme] || 'Automático';
+
+  // Qualidade
+  const qs = [
+    { k: 'padrao', l: 'Padrão' },
+    { k: 'alta', l: 'Alta' },
+    { k: 'maxima', l: 'Máxima' }
+  ];
+  document.getElementById('qualityOptions').innerHTML = qs.map(q =>
+    `<div class="period-opt ${appConfig.imageQuality === q.k ? 'active' : ''}" onclick="setImageQuality('${q.k}')">${q.l}</div>`
+  ).join('');
+  const preset = QUALITY_PRESETS[appConfig.imageQuality] || QUALITY_PRESETS.alta;
+  document.getElementById('cfgQualityLabel').textContent = preset.label;
+  document.getElementById('qualityInfo').textContent = `// ${preset.desc}`;
+
+  // Técnico
+  document.getElementById('cfgTecLabel').textContent = tecnicoAtual || '— não cadastrado —';
+
+  // Storage
+  updateStorageInfo();
+}
+
+async function updateStorageInfo() {
+  let lsBytes = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    const v = localStorage.getItem(k);
+    lsBytes += (k.length + (v ? v.length : 0)) * 2;
+  }
+
+  // Estima uso do IndexedDB usando navigator.storage.estimate (se disponível)
+  let idbBytes = 0;
+  let totalQuota = null;
+  if (navigator.storage && navigator.storage.estimate) {
+    try {
+      const est = await navigator.storage.estimate();
+      // usage inclui IDB + caches + tudo, vamos usar como proxy
+      idbBytes = Math.max(0, (est.usage || 0) - lsBytes);
+      totalQuota = est.quota || null;
+    } catch(e) {}
+  }
+
+  const lsMB = (lsBytes / (1024*1024)).toFixed(2);
+  const idbMB = (idbBytes / (1024*1024)).toFixed(2);
+  const totalMB = ((lsBytes + idbBytes) / (1024*1024)).toFixed(2);
+
+  // localStorage limita a ~10 MB
+  const lsLimitMB = 10;
+  const lsPct = Math.min(100, (lsBytes / (1024*1024) / lsLimitMB) * 100);
+
+  // Conta fotos
+  let totalFotos = 0;
+  let fotosNoIdb = 0;
+  atendimentos.forEach(a => (a.despesas||[]).forEach(n => {
+    if (n.imagem) {
+      totalFotos++;
+      if (typeof n.imagem === 'string' && n.imagem.startsWith('idb:')) fotosNoIdb++;
+    }
+  }));
+
+  document.getElementById('storageBarFill').style.width = lsPct.toFixed(1) + '%';
+  document.getElementById('cfgStorageLabel').textContent = `${totalMB} MB`;
+
+  let detailsHtml = `dados: ${lsMB} MB de ${lsLimitMB} MB (localStorage)<br>`;
+  detailsHtml += `fotos: ${idbMB} MB (IndexedDB · ~ilimitado)<br>`;
+  detailsHtml += `${atendimentos.length} atend. · ${totalFotos} fotos (${fotosNoIdb} no IndexedDB)`;
+  if (lsPct > 80) detailsHtml += '<br>⚠ dados próximos do limite — considere fazer backup';
+
+  document.getElementById('storageDetails').innerHTML = detailsHtml;
+}
+
+// ============ COMPRESSÃO DE IMAGEM ============
+function compressImage(file, callback) {
+  const preset = QUALITY_PRESETS[appConfig.imageQuality] || QUALITY_PRESETS.alta;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      // Calcula nova dimensão mantendo proporção
+      let w = img.width, h = img.height;
+      const maxDim = preset.maxDim;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
+        else { w = Math.round(w * (maxDim / h)); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      // Sempre salva como JPEG (melhor compressão pra fotos)
+      const dataUrl = canvas.toDataURL('image/jpeg', preset.jpegQuality);
+      callback(dataUrl, file.name);
+    };
+    img.onerror = function() {
+      // fallback: usa original
+      callback(e.target.result, file.name);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ============ CATEGORIAS (gerenciadas pelo escritório) ============
+const CAT_COLORS = [
+  '#dc2626', '#ea580c', '#d97706', '#65a30d',
+  '#059669', '#0891b2', '#0284c7', '#2563eb',
+  '#7c3aed', '#c026d3', '#db2777', '#6b7280'
+];
+let editingCatId = null;
+let selectedCatColor = CAT_COLORS[0];
+
+function goCategorias() {
+  showScreen('screenCategorias');
+  renderCategoriasList();
+}
+
+function renderCategoriasList() {
+  const list = document.getElementById('catList');
+  document.getElementById('catCount').textContent =
+    appCategorias.length === 0 ? '— nenhuma categoria —' :
+    `— ${appCategorias.length} ${appCategorias.length===1?'categoria':'categorias'} —`;
+
+  if (appCategorias.length === 0) {
+    list.innerHTML = `<div class="empty" style="padding:30px 20px;">
+      nenhuma categoria cadastrada<br>
+      <span style="font-size:11px;opacity:0.7;">toque em "+ Nova Categoria" para começar</span>
+    </div>`;
+    return;
+  }
+
+  // Conta uso de cada categoria
+  const uso = {};
+  atendimentos.forEach(a => (a.despesas||[]).forEach(n => {
+    if (n.categoria) uso[n.categoria] = (uso[n.categoria]||0) + 1;
+  }));
+
+  list.innerHTML = appCategorias.map(c => {
+    const n = uso[c.id] || 0;
+    return `
+      <div class="cat-item" onclick="openCatModal('${c.id}')">
+        <span class="cat-bullet" style="background:${c.color};"></span>
+        <div>
+          <div class="cat-item-name">${c.label}</div>
+          <div class="cat-item-info">${n === 0 ? 'sem uso' : n + ' ' + (n===1?'despesa':'despesas')}</div>
+        </div>
+        <span class="cat-item-arrow">›</span>
+      </div>`;
+  }).join('');
+}
+
+function openCatModal(catId) {
+  editingCatId = catId || null;
+  const c = catId ? appCategorias.find(x => x.id === catId) : null;
+  document.getElementById('modalCatTitle').textContent = c ? 'Editar Categoria' : 'Nova Categoria';
+  document.getElementById('catNome').value = c ? c.label : '';
+  selectedCatColor = c ? c.color : CAT_COLORS[0];
+  document.getElementById('btnDelCat').classList.toggle('hidden', !catId);
+  renderColorPicker();
+  updateCatPreview();
+  document.getElementById('modalCat').classList.add('active');
+  setTimeout(() => document.getElementById('catNome').focus(), 200);
+  // Atualiza preview ao digitar
+  document.getElementById('catNome').oninput = updateCatPreview;
+}
+
+function closeCatModal() {
+  document.getElementById('modalCat').classList.remove('active');
+  editingCatId = null;
+}
+
+function renderColorPicker() {
+  const html = CAT_COLORS.map(c =>
+    `<div class="cat-color-swatch ${c === selectedCatColor ? 'active' : ''}"
+          style="background:${c};"
+          onclick="selectCatColor('${c}')"></div>`
+  ).join('');
+  document.getElementById('catColorPicker').innerHTML = html;
+}
+
+function selectCatColor(color) {
+  selectedCatColor = color;
+  renderColorPicker();
+  updateCatPreview();
+}
+
+function updateCatPreview() {
+  const nome = document.getElementById('catNome').value.trim() || 'Nova Categoria';
+  document.getElementById('catPreviewLabel').textContent = nome;
+  document.getElementById('catPreviewBullet').style.background = selectedCatColor;
+}
+
+function salvarCategoria() {
+  const nome = document.getElementById('catNome').value.trim();
+  if (!nome) { alert('Digite um nome para a categoria'); return; }
+  if (editingCatId) {
+    const c = appCategorias.find(x => x.id === editingCatId);
+    if (c) { c.label = nome; c.color = selectedCatColor; }
+    toast('categoria atualizada');
+  } else {
+    const id = 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    appCategorias.push({ id, label: nome, color: selectedCatColor });
+    toast('categoria criada');
+  }
+  saveCategorias();
+  closeCatModal();
+  renderCategoriasList();
+}
+
+function deleteCategoria() {
+  if (!editingCatId) return;
+  // Verifica se há despesas usando
+  let uso = 0;
+  atendimentos.forEach(a => (a.despesas||[]).forEach(n => {
+    if (n.categoria === editingCatId) uso++;
+  }));
+  const msg = uso > 0
+    ? `Esta categoria está em uso por ${uso} ${uso===1?'despesa':'despesas'}. Excluir mesmo assim? As despesas ficarão sem categoria.`
+    : 'Excluir esta categoria?';
+  if (!confirm(msg)) return;
+  appCategorias = appCategorias.filter(x => x.id !== editingCatId);
+  saveCategorias();
+  closeCatModal();
+  renderCategoriasList();
+  toast('categoria removida');
+}
+
+// Aplica tema na inicialização
+applyTheme();
+
+goHome();
+// Pede cadastro de técnico no primeiro uso
+if (!tecnicoAtual) {
+  setTimeout(() => openTecnicoModal(true), 400);
+}
+
+// Migração de imagens antigas (localStorage → IndexedDB) e pré-carregamento do cache
+// Roda em background sem bloquear a UI
+(async function initImages() {
+  try {
+    await migrateLegacyImages();
+    await preloadAllImages();
+  } catch (e) {
+    console.error('Erro na inicialização de imagens:', e);
+  }
+})();
+</script>
+</body>
+</html>
