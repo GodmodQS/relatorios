@@ -9,6 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -1638,6 +1640,43 @@
             Nome que aparece nos atendimentos cadastrados deste celular.
           </p>
           <button class="btn btn-secondary" onclick="openTecnicoModal(false)">⚙ Trocar Técnico</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GOOGLE DRIVE -->
+    <div class="form-paper" style="margin-bottom:14px;">
+      <div class="form-content">
+        <div class="section-bar">
+          <span>Google Drive</span>
+          <span class="bar-meta" id="cfgGoogleLabel">Desconectado</span>
+        </div>
+        <div style="padding:12px;">
+          <p style="font-size:12px;color:var(--ink-soft);line-height:1.4;margin-bottom:12px;font-style:italic;">
+            Conecte sua conta Google para sincronizar atendimentos com o escritório (em breve).
+          </p>
+
+          <!-- Estado desconectado -->
+          <div id="googleDisconnected">
+            <button class="btn btn-primary" onclick="googleSignIn()">⚡ Conectar com Google</button>
+            <div style="margin-top:10px;padding:8px 10px;background:var(--paper-2);border:1px dashed var(--line-soft);font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-soft);line-height:1.5;">
+              // o login fica salvo neste celular<br>
+              // por enquanto: apenas autenticação (sem upload ainda)
+            </div>
+          </div>
+
+          <!-- Estado conectado -->
+          <div id="googleConnected" class="hidden">
+            <div style="display:flex;gap:12px;align-items:center;padding:10px;background:var(--paper-2);border:1.5px solid var(--line);margin-bottom:10px;">
+              <img id="googleUserPic" src="" style="width:42px;height:42px;border-radius:50%;border:1.5px solid var(--line);background:var(--paper);">
+              <div style="flex:1;min-width:0;">
+                <div id="googleUserName" style="font-size:13px;font-weight:600;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</div>
+                <div id="googleUserEmail" style="font-size:11px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</div>
+              </div>
+              <span style="color:var(--success, #059669);font-size:18px;" title="Conectado">●</span>
+            </div>
+            <button class="btn btn-secondary" onclick="googleSignOut()">✕ Desconectar</button>
+          </div>
         </div>
       </div>
     </div>
@@ -4951,6 +4990,9 @@ function renderConfig() {
 
   // Storage
   updateStorageInfo();
+
+  // Google Drive
+  renderGoogleSection();
 }
 
 async function updateStorageInfo() {
@@ -5157,6 +5199,156 @@ function deleteCategoria() {
   closeCatModal();
   renderCategoriasList();
   toast('categoria removida');
+}
+
+// ============ GOOGLE DRIVE / OAUTH ============
+const GOOGLE_CLIENT_ID = '649959599209-mgidotd4edlap498clrmh0c982gk3iot.apps.googleusercontent.com';
+const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const GOOGLE_KEY = 'sirona_google_v1';
+
+let googleAuth = JSON.parse(localStorage.getItem(GOOGLE_KEY) || 'null');
+let googleTokenClient = null;
+let googleReady = false;
+
+function saveGoogleAuth() {
+  if (googleAuth) {
+    localStorage.setItem(GOOGLE_KEY, JSON.stringify(googleAuth));
+  } else {
+    localStorage.removeItem(GOOGLE_KEY);
+  }
+}
+
+// Decodifica JWT (token de ID do Google) pra extrair info do usuário
+function decodeJwtPayload(token) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = atob(payload);
+    // Suporta caracteres UTF-8 (acentos no nome)
+    const utf8 = decodeURIComponent(escape(decoded));
+    return JSON.parse(utf8);
+  } catch (e) {
+    console.error('Erro ao decodificar JWT:', e);
+    return null;
+  }
+}
+
+// Inicializa o cliente Google quando a biblioteca carregar
+function initGoogleAuth() {
+  if (typeof google === 'undefined' || !google.accounts) {
+    // Biblioteca ainda não carregou; tenta de novo em breve
+    setTimeout(initGoogleAuth, 500);
+    return;
+  }
+  try {
+    // Cliente pra obter access_token (será usado depois pra Drive API)
+    googleTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: GOOGLE_SCOPES,
+      callback: (tokenResponse) => {
+        if (tokenResponse && tokenResponse.access_token) {
+          if (!googleAuth) googleAuth = {};
+          googleAuth.accessToken = tokenResponse.access_token;
+          googleAuth.tokenExpiresAt = Date.now() + (tokenResponse.expires_in * 1000);
+          saveGoogleAuth();
+          renderGoogleSection();
+          toast('conectado com sucesso');
+        }
+      },
+      error_callback: (err) => {
+        console.error('Erro OAuth:', err);
+        if (err.type === 'popup_closed') {
+          toast('login cancelado');
+        } else {
+          alert('Erro ao conectar com Google: ' + (err.message || err.type || 'desconhecido'));
+        }
+      },
+    });
+    googleReady = true;
+    console.log('Google Auth inicializado');
+  } catch (e) {
+    console.error('Erro ao inicializar Google Auth:', e);
+  }
+}
+
+// Tenta inicializar quando a biblioteca carregar
+window.addEventListener('load', () => {
+  setTimeout(initGoogleAuth, 800);
+});
+
+function googleSignIn() {
+  if (!googleReady || !googleTokenClient) {
+    alert('Conexão com Google ainda não está pronta. Aguarde alguns segundos e tente novamente.');
+    return;
+  }
+  // Primeira coisa: obter info do usuário (nome, email, foto) via One-Tap/Sign-In
+  if (!googleAuth || !googleAuth.email) {
+    // Usa o fluxo de "Sign In With Google" pra pegar dados do usuário
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: (credResponse) => {
+        const userInfo = decodeJwtPayload(credResponse.credential);
+        if (userInfo) {
+          googleAuth = googleAuth || {};
+          googleAuth.email = userInfo.email;
+          googleAuth.name = userInfo.name;
+          googleAuth.picture = userInfo.picture;
+          googleAuth.idToken = credResponse.credential;
+          saveGoogleAuth();
+          renderGoogleSection();
+          // Agora solicita o access_token pro Drive
+          googleTokenClient.requestAccessToken({ prompt: 'consent' });
+        }
+      },
+    });
+    google.accounts.id.prompt((notification) => {
+      // Se One-Tap não funcionar (bloqueado ou indisponível),
+      // pede o access_token direto (sem dados do usuário detalhados)
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        googleTokenClient.requestAccessToken({ prompt: 'consent' });
+      }
+    });
+  } else {
+    // Usuário já tem info, só renova o access_token
+    googleTokenClient.requestAccessToken({ prompt: '' });
+  }
+}
+
+function googleSignOut() {
+  if (!confirm('Desconectar do Google? Você precisará fazer login novamente.')) return;
+  if (googleAuth && googleAuth.accessToken && typeof google !== 'undefined') {
+    try {
+      google.accounts.oauth2.revoke(googleAuth.accessToken, () => {});
+    } catch (e) { /* ignora erros de revogação */ }
+  }
+  googleAuth = null;
+  saveGoogleAuth();
+  renderGoogleSection();
+  toast('desconectado');
+}
+
+function renderGoogleSection() {
+  const disc = document.getElementById('googleDisconnected');
+  const conn = document.getElementById('googleConnected');
+  const label = document.getElementById('cfgGoogleLabel');
+  if (!disc || !conn || !label) return; // tela ainda não renderizada
+
+  if (googleAuth && googleAuth.email) {
+    disc.classList.add('hidden');
+    conn.classList.remove('hidden');
+    label.textContent = 'Conectado';
+    const pic = document.getElementById('googleUserPic');
+    const name = document.getElementById('googleUserName');
+    const email = document.getElementById('googleUserEmail');
+    if (pic) pic.src = googleAuth.picture || '';
+    if (name) name.textContent = googleAuth.name || '—';
+    if (email) email.textContent = googleAuth.email || '—';
+  } else {
+    disc.classList.remove('hidden');
+    conn.classList.add('hidden');
+    label.textContent = 'Desconectado';
+  }
 }
 
 // Aplica tema na inicialização
