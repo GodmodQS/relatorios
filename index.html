@@ -5519,9 +5519,15 @@ function googleTokenValid() {
 function googleRefreshToken() {
   return new Promise((resolve, reject) => {
     if (!googleTokenClient) { reject(new Error('Google não inicializado')); return; }
+    // Timeout: se em 15s não voltar, falha
+    const timeoutId = setTimeout(() => {
+      googleTokenClient.callback = oldCb;
+      reject(new Error('Timeout ao renovar token (15s)'));
+    }, 15000);
     // Sobrescreve callback temporariamente
     const oldCb = googleTokenClient.callback;
     googleTokenClient.callback = (resp) => {
+      clearTimeout(timeoutId);
       googleTokenClient.callback = oldCb;
       if (resp && resp.access_token) {
         googleAuth.accessToken = resp.access_token;
@@ -5535,7 +5541,10 @@ function googleRefreshToken() {
     try {
       // 'none' = tenta sem mostrar popup; se falhar, usuário precisa logar de novo
       googleTokenClient.requestAccessToken({ prompt: '' });
-    } catch (e) { reject(e); }
+    } catch (e) {
+      clearTimeout(timeoutId);
+      reject(e);
+    }
   });
 }
 
@@ -5591,40 +5600,88 @@ async function driveCreateFolder(name, parentId = null) {
 }
 
 // Garante que as pastas existem (cria se necessário) e salva os IDs
+// Versão robusta com logs detalhados, timeout e retry
 async function driveEnsureFolders() {
   if (!googleAuth) throw new Error('Não conectado');
-  // Pasta principal
+  console.log('[Drive] Verificando pastas...');
+
+  // Função pra adicionar timeout em promises (evita travar pra sempre)
+  const withTimeout = (promise, ms, label) => Promise.race([
+    promise,
+    new Promise((_, rej) => setTimeout(() => rej(new Error(`Timeout em "${label}" após ${ms/1000}s`)), ms))
+  ]);
+
+  // 1. Pasta principal
   let mainFolder = null;
+
+  // Tenta usar o ID salvo (se houver)
   if (googleAuth.folderId) {
-    // Verifica se ainda existe
+    console.log('[Drive] Tentando reutilizar pasta salva:', googleAuth.folderId);
     try {
-      mainFolder = await driveApi('/files/' + googleAuth.folderId + '?fields=id,name,trashed');
-      if (mainFolder.trashed) mainFolder = null;
+      mainFolder = await withTimeout(
+        driveApi('/files/' + googleAuth.folderId + '?fields=id,name,trashed'),
+        10000, 'verificar pasta existente'
+      );
+      if (mainFolder && mainFolder.trashed) {
+        console.log('[Drive] Pasta salva está na lixeira, criando nova');
+        mainFolder = null;
+      } else if (mainFolder) {
+        console.log('[Drive] Pasta salva ainda existe:', mainFolder.name);
+      }
     } catch (e) {
+      console.warn('[Drive] Pasta salva não acessível (' + e.message + '), criando nova');
       mainFolder = null;
     }
   }
+
+  // Se não tem ou perdeu, cria nova (sem tentar procurar antes — drive.file não tem permissão pra listar tudo)
   if (!mainFolder) {
-    mainFolder = await driveFindFolder(DRIVE_FOLDER_NAME);
-    if (!mainFolder) mainFolder = await driveCreateFolder(DRIVE_FOLDER_NAME);
+    console.log('[Drive] Criando pasta principal...');
+    try {
+      mainFolder = await withTimeout(
+        driveCreateFolder(DRIVE_FOLDER_NAME),
+        15000, 'criar pasta principal'
+      );
+      console.log('[Drive] Pasta principal criada:', mainFolder.id);
+    } catch (e) {
+      console.error('[Drive] Erro ao criar pasta principal:', e);
+      throw new Error('Não foi possível criar a pasta no Drive: ' + e.message);
+    }
     googleAuth.folderId = mainFolder.id;
   }
-  // Subpasta de fotos
+
+  // 2. Subpasta de fotos
   let photosFolder = null;
   if (googleAuth.photosFolderId) {
     try {
-      photosFolder = await driveApi('/files/' + googleAuth.photosFolderId + '?fields=id,name,trashed');
-      if (photosFolder.trashed) photosFolder = null;
+      photosFolder = await withTimeout(
+        driveApi('/files/' + googleAuth.photosFolderId + '?fields=id,name,trashed'),
+        10000, 'verificar subpasta de fotos'
+      );
+      if (photosFolder && photosFolder.trashed) photosFolder = null;
     } catch (e) {
+      console.warn('[Drive] Subpasta fotos não acessível, criando nova');
       photosFolder = null;
     }
   }
+
   if (!photosFolder) {
-    photosFolder = await driveFindFolder(DRIVE_PHOTOS_FOLDER, googleAuth.folderId);
-    if (!photosFolder) photosFolder = await driveCreateFolder(DRIVE_PHOTOS_FOLDER, googleAuth.folderId);
+    console.log('[Drive] Criando subpasta de fotos...');
+    try {
+      photosFolder = await withTimeout(
+        driveCreateFolder(DRIVE_PHOTOS_FOLDER, googleAuth.folderId),
+        15000, 'criar subpasta de fotos'
+      );
+      console.log('[Drive] Subpasta criada:', photosFolder.id);
+    } catch (e) {
+      console.error('[Drive] Erro ao criar subpasta:', e);
+      throw new Error('Não foi possível criar a subpasta de fotos: ' + e.message);
+    }
     googleAuth.photosFolderId = photosFolder.id;
   }
+
   saveGoogleAuth();
+  console.log('[Drive] Pastas prontas');
   return { folderId: googleAuth.folderId, photosFolderId: googleAuth.photosFolderId };
 }
 
@@ -5808,6 +5865,10 @@ async function syncCurrentAtendimento() {
     }
     return;
   }
+  if (!googleAuth.accessToken) {
+    alert('Token de acesso ausente. Vá em Configurações, desconecte e conecte novamente.');
+    return;
+  }
   const btn = document.getElementById('btnSyncDrive');
   if (!btn) return;
 
@@ -5818,22 +5879,38 @@ async function syncCurrentAtendimento() {
   btn.disabled = true;
   btn.textContent = '☁ enviando...';
 
+  // Timeout global de 2 minutos
+  const globalTimeout = setTimeout(() => {
+    btn.textContent = originalText;
+    btn.disabled = false;
+    alert('A sincronização demorou demais (>2min). Pode ser problema de internet ou de permissões.\n\nVerifique:\n• Sua conexão de internet\n• Se você fez login com a mesma conta Google que cadastrou no Google Cloud\n• Se seu email está na lista de "Usuários de teste" do projeto Sirona App');
+  }, 120000);
+
   try {
     await syncAtendimentoToDrive(currentAtend, {
       onProgress: (msg) => { btn.textContent = '☁ ' + msg; },
     });
+    clearTimeout(globalTimeout);
     btn.textContent = '✓ sincronizado';
     toast('atendimento sincronizado');
     setTimeout(() => { btn.textContent = originalText; btn.disabled = false; updateSyncStatus(); }, 2000);
   } catch (e) {
+    clearTimeout(globalTimeout);
     console.error('Erro ao sincronizar:', e);
     btn.textContent = originalText;
     btn.disabled = false;
-    if (e.message && e.message.includes('Token expirado')) {
-      alert('Sua sessão Google expirou. Vá em Configurações e conecte novamente.');
-    } else {
-      alert('Erro ao sincronizar com Drive:\n\n' + (e.message || 'desconhecido') + '\n\nVerifique sua conexão e tente novamente.');
+    let mensagem = e.message || 'erro desconhecido';
+    let dica = '';
+    if (mensagem.includes('Token expirado') || mensagem.includes('401')) {
+      dica = '\n\n→ Sua sessão Google expirou. Vá em Configurações, desconecte e conecte de novo.';
+    } else if (mensagem.includes('403')) {
+      dica = '\n\n→ Erro de permissão. Verifique no Google Cloud Console se seu email está na lista de "Usuários de teste" do projeto Sirona App.';
+    } else if (mensagem.includes('Timeout')) {
+      dica = '\n\n→ A operação demorou demais. Verifique sua conexão de internet.';
+    } else if (mensagem.includes('Failed to fetch')) {
+      dica = '\n\n→ Sem conexão com a internet ou Drive bloqueado pela rede.';
     }
+    alert('Erro ao sincronizar com Drive:\n\n' + mensagem + dica);
   }
 }
 
