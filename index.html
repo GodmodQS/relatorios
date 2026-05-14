@@ -1727,6 +1727,7 @@
               </div>
               <span style="color:var(--success, #059669);font-size:18px;" title="Conectado">●</span>
             </div>
+            <div id="googleFolderInfo" style="margin-bottom:10px;padding:8px 10px;background:var(--paper-2);border:1px dashed var(--line-soft);font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-soft);line-height:1.6;">—</div>
             <button class="btn btn-secondary" onclick="googleSignOut()">✕ Desconectar</button>
           </div>
         </div>
@@ -1973,6 +1974,7 @@
 
     <div class="actions">
       <button class="btn btn-primary" onclick="exportPdf()">↓ Exportar Relatório PDF</button>
+      <button class="btn btn-secondary" id="btnSyncDrive" onclick="syncCurrentAtendimento()">☁ Sincronizar com Drive</button>
       <button class="btn btn-secondary" onclick="saveAndBack()">✓ Salvar e Voltar</button>
       <button class="btn btn-danger" onclick="deleteAtendimento()">Excluir Atendimento</button>
     </div>
@@ -3167,6 +3169,7 @@ function renderDetail() {
   updateTimeButtons();
   renderDespesas();
   updateTotals();
+  updateSyncStatus();
 }
 
 function updateTimeButtons() {
@@ -5485,10 +5488,368 @@ function renderGoogleSection() {
     if (pic) pic.src = googleAuth.picture || '';
     if (name) name.textContent = googleAuth.name || '—';
     if (email) email.textContent = googleAuth.email || '—';
+    // Atualiza info da pasta Drive
+    const folderInfo = document.getElementById('googleFolderInfo');
+    if (folderInfo) {
+      if (googleAuth.folderId) {
+        folderInfo.innerHTML = `// pasta no Drive: <b>Sirona - Atendimentos</b><br>// pronto pra sincronizar`;
+      } else {
+        folderInfo.innerHTML = `// pasta ainda não foi criada<br>// será criada na primeira sincronização`;
+      }
+    }
   } else {
     disc.classList.remove('hidden');
     conn.classList.add('hidden');
     label.textContent = 'Desconectado';
+  }
+}
+
+// ============ GOOGLE DRIVE API (uploads, pastas, sync) ============
+const DRIVE_FOLDER_NAME = 'Sirona - Atendimentos';
+const DRIVE_PHOTOS_FOLDER = 'fotos';
+
+// Verifica se o token ainda é válido (com margem de 60s)
+function googleTokenValid() {
+  if (!googleAuth || !googleAuth.accessToken) return false;
+  if (!googleAuth.tokenExpiresAt) return false;
+  return googleAuth.tokenExpiresAt > Date.now() + 60000;
+}
+
+// Renova o access_token silenciosamente (sem mostrar popup)
+function googleRefreshToken() {
+  return new Promise((resolve, reject) => {
+    if (!googleTokenClient) { reject(new Error('Google não inicializado')); return; }
+    // Sobrescreve callback temporariamente
+    const oldCb = googleTokenClient.callback;
+    googleTokenClient.callback = (resp) => {
+      googleTokenClient.callback = oldCb;
+      if (resp && resp.access_token) {
+        googleAuth.accessToken = resp.access_token;
+        googleAuth.tokenExpiresAt = Date.now() + (resp.expires_in * 1000);
+        saveGoogleAuth();
+        resolve(resp.access_token);
+      } else {
+        reject(new Error('Falha ao renovar token'));
+      }
+    };
+    try {
+      // 'none' = tenta sem mostrar popup; se falhar, usuário precisa logar de novo
+      googleTokenClient.requestAccessToken({ prompt: '' });
+    } catch (e) { reject(e); }
+  });
+}
+
+// Garante token válido antes de chamar a API
+async function ensureGoogleToken() {
+  if (googleTokenValid()) return googleAuth.accessToken;
+  // Tenta renovar
+  try {
+    return await googleRefreshToken();
+  } catch (e) {
+    throw new Error('Token expirado. Faça login novamente.');
+  }
+}
+
+// Wrapper pra chamar a Drive API
+async function driveApi(path, options = {}) {
+  const token = await ensureGoogleToken();
+  const headers = options.headers || {};
+  headers['Authorization'] = 'Bearer ' + token;
+  const url = path.startsWith('http') ? path : 'https://www.googleapis.com/drive/v3' + path;
+  const resp = await fetch(url, { ...options, headers });
+  if (!resp.ok) {
+    const text = await resp.text();
+    throw new Error(`Drive API ${resp.status}: ${text.slice(0, 200)}`);
+  }
+  // Algumas chamadas retornam vazio
+  const ct = resp.headers.get('content-type') || '';
+  if (ct.includes('application/json')) return resp.json();
+  return resp.text();
+}
+
+// Procura por uma pasta com nome dado dentro de um parent (ou raiz se parent=null)
+async function driveFindFolder(name, parentId = null) {
+  let q = `name='${name.replace(/'/g, "\\'")}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+  if (parentId) q += ` and '${parentId}' in parents`;
+  else q += ` and 'root' in parents`;
+  const result = await driveApi('/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)');
+  return (result.files && result.files[0]) ? result.files[0] : null;
+}
+
+// Cria uma pasta
+async function driveCreateFolder(name, parentId = null) {
+  const metadata = {
+    name,
+    mimeType: 'application/vnd.google-apps.folder',
+  };
+  if (parentId) metadata.parents = [parentId];
+  return driveApi('/files', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(metadata),
+  });
+}
+
+// Garante que as pastas existem (cria se necessário) e salva os IDs
+async function driveEnsureFolders() {
+  if (!googleAuth) throw new Error('Não conectado');
+  // Pasta principal
+  let mainFolder = null;
+  if (googleAuth.folderId) {
+    // Verifica se ainda existe
+    try {
+      mainFolder = await driveApi('/files/' + googleAuth.folderId + '?fields=id,name,trashed');
+      if (mainFolder.trashed) mainFolder = null;
+    } catch (e) {
+      mainFolder = null;
+    }
+  }
+  if (!mainFolder) {
+    mainFolder = await driveFindFolder(DRIVE_FOLDER_NAME);
+    if (!mainFolder) mainFolder = await driveCreateFolder(DRIVE_FOLDER_NAME);
+    googleAuth.folderId = mainFolder.id;
+  }
+  // Subpasta de fotos
+  let photosFolder = null;
+  if (googleAuth.photosFolderId) {
+    try {
+      photosFolder = await driveApi('/files/' + googleAuth.photosFolderId + '?fields=id,name,trashed');
+      if (photosFolder.trashed) photosFolder = null;
+    } catch (e) {
+      photosFolder = null;
+    }
+  }
+  if (!photosFolder) {
+    photosFolder = await driveFindFolder(DRIVE_PHOTOS_FOLDER, googleAuth.folderId);
+    if (!photosFolder) photosFolder = await driveCreateFolder(DRIVE_PHOTOS_FOLDER, googleAuth.folderId);
+    googleAuth.photosFolderId = photosFolder.id;
+  }
+  saveGoogleAuth();
+  return { folderId: googleAuth.folderId, photosFolderId: googleAuth.photosFolderId };
+}
+
+// Procura arquivo por nome dentro da pasta principal
+async function driveFindFile(name, parentId) {
+  const q = `name='${name.replace(/'/g, "\\'")}' and '${parentId}' in parents and trashed=false`;
+  const result = await driveApi('/files?q=' + encodeURIComponent(q) + '&fields=files(id,name,modifiedTime)');
+  return (result.files && result.files[0]) ? result.files[0] : null;
+}
+
+// Upload de arquivo (cria ou atualiza). content pode ser string JSON ou Blob
+async function driveUploadFile(name, content, mimeType, parentId, existingFileId = null) {
+  const token = await ensureGoogleToken();
+  const metadata = { name, mimeType };
+  if (!existingFileId) metadata.parents = [parentId];
+
+  // Monta o corpo multipart manualmente
+  const boundary = '-------sirona' + Math.random().toString(36).slice(2);
+  const delimiter = '\r\n--' + boundary + '\r\n';
+  const closeDelim = '\r\n--' + boundary + '--';
+
+  let body;
+  let contentEncoded;
+  if (content instanceof Blob) {
+    // Converte Blob pra base64 e usa multipart
+    contentEncoded = await new Promise((resolve) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result.split(',')[1]);
+      r.readAsDataURL(content);
+    });
+    body =
+      delimiter +
+      'Content-Type: application/json\r\n\r\n' +
+      JSON.stringify(metadata) +
+      delimiter +
+      'Content-Type: ' + mimeType + '\r\n' +
+      'Content-Transfer-Encoding: base64\r\n\r\n' +
+      contentEncoded +
+      closeDelim;
+  } else {
+    body =
+      delimiter +
+      'Content-Type: application/json\r\n\r\n' +
+      JSON.stringify(metadata) +
+      delimiter +
+      'Content-Type: ' + mimeType + '\r\n\r\n' +
+      content +
+      closeDelim;
+  }
+
+  const url = existingFileId
+    ? `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=multipart`
+    : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+
+  const resp = await fetch(url, {
+    method: existingFileId ? 'PATCH' : 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'multipart/related; boundary=' + boundary,
+    },
+    body,
+  });
+  if (!resp.ok) {
+    const text = await resp.text();
+    throw new Error(`Upload falhou ${resp.status}: ${text.slice(0, 200)}`);
+  }
+  return resp.json();
+}
+
+// Sanitiza nome de cliente pra usar em nome de arquivo
+function sanitizeFileName(s) {
+  return (s || '').toString()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+    .replace(/[^a-zA-Z0-9\-_]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40) || 'sem-nome';
+}
+
+function atendFileName(a) {
+  const data = a.data || todayISO();
+  const cliente = sanitizeFileName(a.cliente);
+  const num = a.os || a.id.slice(-6);
+  return `${data}_${cliente}_OT-${num}.json`;
+}
+
+// Sincroniza um atendimento com o Drive
+async function syncAtendimentoToDrive(atend, opts = {}) {
+  if (!googleAuth || !googleAuth.email) throw new Error('Não conectado ao Google');
+  const onProgress = opts.onProgress || (() => {});
+
+  onProgress('preparando pastas...');
+  await driveEnsureFolders();
+
+  // 1. Sobe as fotos primeiro (se ainda não subiram) e coleta os IDs
+  const despesas = atend.despesas || [];
+  const fotosNovas = [];
+  for (let i = 0; i < despesas.length; i++) {
+    const n = despesas[i];
+    if (!n.imagem) continue;
+    // Se já tem driveFileId, pula
+    if (n.driveFileId) continue;
+    onProgress(`enviando foto ${i + 1}/${despesas.length}...`);
+
+    // Pega a dataURL (do cache ou IDB)
+    let dataUrl = imgSrc(n.imagem);
+    if (!dataUrl && n.imagem.startsWith && n.imagem.startsWith('idb:')) {
+      await loadImageToCache(n.imagem);
+      dataUrl = imgSrc(n.imagem);
+    }
+    if (!dataUrl) continue;
+
+    // Converte dataURL pra Blob
+    const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if (!m) continue;
+    const mimeType = m[1];
+    const bin = atob(m[2]);
+    const bytes = new Uint8Array(bin.length);
+    for (let j = 0; j < bin.length; j++) bytes[j] = bin.charCodeAt(j);
+    const blob = new Blob([bytes], { type: mimeType });
+
+    const ext = mimeType.includes('png') ? 'png' : 'jpg';
+    const fotoName = `${atend.id}_${n.id}.${ext}`;
+    try {
+      const uploaded = await driveUploadFile(fotoName, blob, mimeType, googleAuth.photosFolderId);
+      n.driveFileId = uploaded.id;
+      fotosNovas.push(uploaded.id);
+    } catch (e) {
+      console.error('Erro upload foto:', e);
+      throw new Error('Falha ao enviar foto: ' + e.message);
+    }
+  }
+
+  // 2. Sobe o JSON do atendimento (com referências às fotos)
+  onProgress('enviando dados do atendimento...');
+  // Cria uma versão "limpa" do atendimento pro JSON (sem imagens base64 grandes)
+  const atendForJson = {
+    ...atend,
+    despesas: despesas.map(n => {
+      const { imagem, arquivo, ...rest } = n; // remove dataURLs locais
+      return rest; // mantém driveFileId que aponta pra foto no Drive
+    }),
+    _syncedAt: new Date().toISOString(),
+    _syncedBy: googleAuth.email,
+  };
+  const jsonContent = JSON.stringify(atendForJson, null, 2);
+
+  const fileName = atendFileName(atend);
+  // Procura se já existe (pra atualizar em vez de duplicar)
+  let existing = null;
+  if (atend.driveFileId) {
+    try {
+      existing = await driveApi('/files/' + atend.driveFileId + '?fields=id,trashed');
+      if (existing.trashed) existing = null;
+    } catch (e) { existing = null; }
+  }
+  if (!existing) {
+    existing = await driveFindFile(fileName, googleAuth.folderId);
+  }
+
+  const uploaded = await driveUploadFile(
+    fileName,
+    jsonContent,
+    'application/json',
+    googleAuth.folderId,
+    existing ? existing.id : null
+  );
+  atend.driveFileId = uploaded.id;
+  atend.driveSyncedAt = new Date().toISOString();
+  save();
+  onProgress('concluído ✓');
+  return uploaded;
+}
+
+// Função chamada pelo botão "☁ Sincronizar com Drive" no detalhe do atendimento
+async function syncCurrentAtendimento() {
+  if (!currentAtend) return;
+  if (!googleAuth || !googleAuth.email) {
+    if (confirm('Você precisa estar conectado ao Google Drive.\n\nAbrir Configurações para conectar agora?')) {
+      goConfig();
+    }
+    return;
+  }
+  const btn = document.getElementById('btnSyncDrive');
+  if (!btn) return;
+
+  // Salva o atendimento antes (pra garantir que está atualizado em memória)
+  saveAtendimento(false);
+
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '☁ enviando...';
+
+  try {
+    await syncAtendimentoToDrive(currentAtend, {
+      onProgress: (msg) => { btn.textContent = '☁ ' + msg; },
+    });
+    btn.textContent = '✓ sincronizado';
+    toast('atendimento sincronizado');
+    setTimeout(() => { btn.textContent = originalText; btn.disabled = false; updateSyncStatus(); }, 2000);
+  } catch (e) {
+    console.error('Erro ao sincronizar:', e);
+    btn.textContent = originalText;
+    btn.disabled = false;
+    if (e.message && e.message.includes('Token expirado')) {
+      alert('Sua sessão Google expirou. Vá em Configurações e conecte novamente.');
+    } else {
+      alert('Erro ao sincronizar com Drive:\n\n' + (e.message || 'desconhecido') + '\n\nVerifique sua conexão e tente novamente.');
+    }
+  }
+}
+
+// Atualiza o visual do botão de sync (mostra se já está sincronizado)
+function updateSyncStatus() {
+  if (!currentAtend) return;
+  const btn = document.getElementById('btnSyncDrive');
+  if (!btn) return;
+  if (currentAtend.driveSyncedAt) {
+    const data = new Date(currentAtend.driveSyncedAt);
+    const dataFmt = data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    btn.textContent = `↻ Re-sincronizar (último: ${dataFmt})`;
+    btn.style.opacity = '0.85';
+  } else {
+    btn.textContent = '☁ Sincronizar com Drive';
+    btn.style.opacity = '';
   }
 }
 
