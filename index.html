@@ -1248,6 +1248,151 @@
   .toast.show { opacity: 1; }
   .hidden { display: none !important; }
 
+  /* STATUS DO ATENDIMENTO */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border: 1.5px solid var(--line);
+    background: var(--paper);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .status-badge .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-badge.large {
+    padding: 8px 14px;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+  }
+  .status-badge.large .status-dot { width: 12px; height: 12px; }
+
+  .status-banner {
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    background: var(--paper);
+    margin-bottom: 14px;
+    box-shadow: 3px 3px 0 var(--line);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .status-banner-bar {
+    width: 5px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+  .status-banner-content { flex: 1; min-width: 0; }
+  .status-banner-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 2px;
+  }
+  .status-banner-value {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .status-banner-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-faint);
+    margin-top: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  .status-select-area {
+    padding: 12px;
+    background: var(--paper-2);
+    border: 1.5px dashed var(--line);
+    margin-bottom: 14px;
+  }
+  .status-select-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+    display: block;
+  }
+  .status-options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .status-option {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    padding: 8px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+  }
+  .status-option:active { background: var(--paper-2); }
+  .status-option.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .status-option .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .escritorio-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--accent);
+    color: var(--paper);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .lock-banner {
+    background: rgba(217, 119, 6, 0.08);
+    border: 1.5px solid #D97706;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   /* CATEGORIAS */
   .cat-bullet {
     display: inline-block;
@@ -1878,6 +2023,43 @@
       <span class="topnav-title" id="detailNav">Novo Atendimento</span>
     </div>
 
+    <!-- BANNER DE STATUS -->
+    <div class="status-banner" id="statusBanner">
+      <div class="status-banner-bar" id="statusBannerBar"></div>
+      <div class="status-banner-content">
+        <div class="status-banner-label">Status do Atendimento</div>
+        <div class="status-banner-value" id="statusBannerValue">—</div>
+        <div class="status-banner-sub" id="statusBannerSub">—</div>
+      </div>
+    </div>
+
+    <!-- ÁREA DE MUDANÇA DE STATUS (só pro escritório) -->
+    <div class="status-select-area hidden" id="statusSelectArea">
+      <label class="status-select-label">
+        <span>Alterar Status</span>
+        <span class="escritorio-tag">⊟ ESCRITÓRIO</span>
+      </label>
+      <div class="status-options-grid" id="statusOptionsGrid"></div>
+      <div id="statusObsArea" style="margin-top: 10px;">
+        <label class="status-select-label" style="margin-bottom: 4px;">Observação do Escritório (opcional)</label>
+        <textarea id="statusObsInput" placeholder="Mensagem para o técnico..."
+          style="width:100%;padding:8px;border:1.5px solid var(--line);background:var(--paper);font-family:'IBM Plex Sans',sans-serif;font-size:13px;resize:vertical;min-height:60px;"
+          onchange="onEscritorioObsChange(this.value)"></textarea>
+      </div>
+    </div>
+
+    <!-- AVISO DE BLOQUEIO (pro técnico quando atendimento finalizado) -->
+    <div class="lock-banner hidden" id="lockBanner">
+      <span style="font-size:14px;">🔒</span>
+      <span><b>Atendimento finalizado.</b> Apenas o escritório pode editar. Solicite que ela mude o status caso precise corrigir algo.</span>
+    </div>
+
+    <!-- OBSERVAÇÃO DO ESCRITÓRIO (visível pra todos quando preenchida) -->
+    <div class="lock-banner hidden" id="escritorioObsBanner" style="background:rgba(37,99,235,0.08);border-color:#2563EB;">
+      <span style="font-size:14px;">⊟</span>
+      <span><b>Escritório:</b> <span id="escritorioObsText">—</span></span>
+    </div>
+
     <div class="form-paper">
       <div class="form-content">
         <div class="form-header">
@@ -2343,6 +2525,39 @@ function installPwa() {
 }
 
 const STORAGE_KEY = 'sirona_atendimentos_v2';
+
+// ============ STATUS DO ATENDIMENTO ============
+const STATUS_OPTS = {
+  pendente:    { label: 'Pendente',    color: '#D97706', icon: '🟡', desc: 'Aguardando análise do escritório' },
+  em_analise:  { label: 'Em Análise',  color: '#2563EB', icon: '🔵', desc: 'Escritório está conferindo' },
+  finalizado:  { label: 'Finalizado',  color: '#059669', icon: '🟢', desc: 'Aprovado pelo escritório' },
+  reprovado:   { label: 'Reprovado',   color: '#DC2626', icon: '🔴', desc: 'Necessita correção' },
+};
+
+function statusOf(a) {
+  return (a && a.status) || 'pendente';
+}
+
+function statusLabel(s) {
+  return (STATUS_OPTS[s] || STATUS_OPTS.pendente).label;
+}
+
+function statusColor(s) {
+  return (STATUS_OPTS[s] || STATUS_OPTS.pendente).color;
+}
+
+function statusIcon(s) {
+  return (STATUS_OPTS[s] || STATUS_OPTS.pendente).icon;
+}
+
+// Verifica se um atendimento está bloqueado pra edição pelo técnico
+function isAtendimentoBloqueado(a) {
+  if (!a) return false;
+  if (statusOf(a) !== 'finalizado') return false;
+  // Bloqueia se NÃO é escritório
+  return !isEscritorio();
+}
+
 let atendimentos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
 let currentAtend = null;
 let currentMethod = 'camera';
@@ -3124,6 +3339,8 @@ function renderList() {
 
     const cards = grupoAtend.map(a => {
       const total = totalDespesas(a);
+      const st = statusOf(a);
+      const stOpts = STATUS_OPTS[st] || STATUS_OPTS.pendente;
       return `
         <div class="atend-card" onclick="goDetail('${a.id}')">
           <div class="atend-card-top">
@@ -3137,6 +3354,9 @@ function renderList() {
             <div class="atend-meta-item"><div class="lab">H. Trab</div><div class="val">${a.horasTrab || '—'}</div></div>
             <div class="atend-meta-item"><div class="lab">Km</div><div class="val">${a.km || '—'}</div></div>
             <div class="atend-meta-item"><div class="lab">Despesas</div><div class="val">R$ ${fmt(total)}</div></div>
+          </div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--line-soft);">
+            <span class="status-badge"><span class="status-dot" style="background:${stOpts.color};"></span>${stOpts.label}</span>
           </div>
         </div>
       `;
@@ -3170,6 +3390,108 @@ function renderDetail() {
   renderDespesas();
   updateTotals();
   updateSyncStatus();
+  renderStatus();
+}
+
+// Renderiza o banner de status, área de mudança (só escritório) e bloqueio (só técnico se finalizado)
+function renderStatus() {
+  const a = currentAtend;
+  if (!a) return;
+  const st = statusOf(a);
+  const opts = STATUS_OPTS[st] || STATUS_OPTS.pendente;
+
+  // Banner
+  document.getElementById('statusBannerValue').textContent = opts.label;
+  document.getElementById('statusBannerSub').textContent = opts.desc;
+  document.getElementById('statusBannerBar').style.background = opts.color;
+
+  // Área de mudança (só escritório vê)
+  const selectArea = document.getElementById('statusSelectArea');
+  if (isEscritorio()) {
+    selectArea.classList.remove('hidden');
+    // Popula opções
+    const grid = document.getElementById('statusOptionsGrid');
+    grid.innerHTML = Object.entries(STATUS_OPTS).map(([key, o]) => `
+      <div class="status-option ${st === key ? 'active' : ''}" onclick="setAtendStatus('${key}')">
+        <span class="status-dot" style="background:${o.color};"></span>
+        <span>${o.label}</span>
+      </div>
+    `).join('');
+    // Carrega observação salva
+    const obsInput = document.getElementById('statusObsInput');
+    if (obsInput) obsInput.value = a.observacaoEscritorio || '';
+  } else {
+    selectArea.classList.add('hidden');
+  }
+
+  // Bloqueio visual (técnico vê quando finalizado)
+  const lockBanner = document.getElementById('lockBanner');
+  if (isAtendimentoBloqueado(a)) {
+    lockBanner.classList.remove('hidden');
+    aplicarBloqueio(true);
+  } else {
+    lockBanner.classList.add('hidden');
+    aplicarBloqueio(false);
+  }
+
+  // Observação do escritório (visível pra todos quando preenchida)
+  const obsBanner = document.getElementById('escritorioObsBanner');
+  const obsText = document.getElementById('escritorioObsText');
+  if (a.observacaoEscritorio && a.observacaoEscritorio.trim()) {
+    obsBanner.classList.remove('hidden');
+    obsText.textContent = a.observacaoEscritorio;
+  } else {
+    obsBanner.classList.add('hidden');
+  }
+}
+
+function aplicarBloqueio(bloquear) {
+  // Desabilita campos de input do atendimento quando finalizado (só técnico)
+  const ids = ['dCliente','dOs','dData','dCaso','dKm','dHorasTrab','dHorasDesl','dObs','vChegada','vSaida'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = bloquear;
+  });
+  // Esconde botões de ação que não fazem sentido bloqueado
+  const fab = document.querySelector('#screenDetail .fab-add-nota');
+  if (fab) fab.style.display = bloquear ? 'none' : '';
+}
+
+function setAtendStatus(novoStatus) {
+  if (!currentAtend) return;
+  if (!isEscritorio()) {
+    alert('Apenas o escritório pode alterar o status.');
+    return;
+  }
+  const antigo = statusOf(currentAtend);
+  if (antigo === novoStatus) return;
+
+  // Se estiver mudando PARA finalizado, pede confirmação
+  if (novoStatus === 'finalizado') {
+    if (!confirm('Finalizar este atendimento?\n\nO técnico não poderá mais editar até que você mude o status novamente.')) {
+      return;
+    }
+  }
+  // Se estiver SAINDO de finalizado, confirma desbloqueio
+  if (antigo === 'finalizado') {
+    if (!confirm('Reabrir este atendimento?\n\nO técnico poderá editar novamente.')) {
+      return;
+    }
+  }
+
+  currentAtend.status = novoStatus;
+  currentAtend.statusAtualizadoEm = new Date().toISOString();
+  currentAtend.statusAtualizadoPor = googleAuth ? googleAuth.email : '';
+  save();
+  toast(`status: ${statusLabel(novoStatus).toLowerCase()}`);
+  renderStatus();
+}
+
+function onEscritorioObsChange(value) {
+  if (!currentAtend) return;
+  if (!isEscritorio()) return;
+  currentAtend.observacaoEscritorio = value;
+  save();
 }
 
 function updateTimeButtons() {
@@ -3267,6 +3589,14 @@ function updateTotals() {
 
 function saveAtendimento(goBack) {
   const a = currentAtend; if (!a) return;
+  // Bloqueia se finalizado e não é escritório
+  if (isAtendimentoBloqueado(a)) {
+    if (goBack) {
+      toast('atendimento finalizado, voltando');
+      goList();
+    }
+    return;
+  }
   a.cliente = document.getElementById('dCliente').value.trim();
   a.os = document.getElementById('dOs').value.trim();
   a.data = document.getElementById('dData').value;
@@ -3280,6 +3610,11 @@ function saveAtendimento(goBack) {
 }
 
 function deleteAtendimento() {
+  // Bloqueia delete se finalizado e não é escritório
+  if (isAtendimentoBloqueado(currentAtend)) {
+    alert('Atendimento finalizado. Apenas o escritório pode excluir.');
+    return;
+  }
   if (!confirm('Excluir este atendimento e todas as despesas?')) return;
   // Limpa imagens do IDB
   (currentAtend.despesas || []).forEach(n => {
@@ -3298,6 +3633,7 @@ function newAtendimento() {
     id: uid('a'), cliente: '', os: '', data: todayISO(), caso: '',
     chegada: null, saida: null, horasTrab: '', horasDesl: '', km: '', obs: '',
     despesas: [], tecnico: tecnicoAtual,
+    status: 'pendente',
     criadoEm: new Date().toISOString()
   };
   atendimentos.push(novo);
@@ -4211,6 +4547,8 @@ function renderCnfSearchResults(searchTerm) {
 
     const cards = grupoAtend.map(a => {
       const total = totalDespesas(a);
+      const st = statusOf(a);
+      const stOpts = STATUS_OPTS[st] || STATUS_OPTS.pendente;
       return `
         <div class="atend-card" onclick="goDetail('${a.id}')">
           <button class="atend-card-print" onclick="event.stopPropagation();imprimirAtendimento('${a.id}')" title="Imprimir/PDF">📄</button>
@@ -4225,6 +4563,9 @@ function renderCnfSearchResults(searchTerm) {
             <div class="atend-meta-item"><div class="lab">H. Trab</div><div class="val">${a.horasTrab || '—'}</div></div>
             <div class="atend-meta-item"><div class="lab">Km</div><div class="val">${a.km || '—'}</div></div>
             <div class="atend-meta-item"><div class="lab">Despesas</div><div class="val">R$ ${fmt(total)}</div></div>
+          </div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--line-soft);">
+            <span class="status-badge"><span class="status-dot" style="background:${stOpts.color};"></span>${stOpts.label}</span>
           </div>
         </div>`;
     }).join('');
@@ -5349,6 +5690,20 @@ function deleteCategoria() {
 const GOOGLE_CLIENT_ID = '649959599209-mgidotd4edlap498clrmh0c982gk3iot.apps.googleusercontent.com';
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const GOOGLE_KEY = 'sirona_google_v1';
+
+// Emails que têm permissão de Escritório (pode ter mais de um)
+// Adicione novos emails aqui se mais de uma pessoa for fazer o papel do escritório
+const EMAILS_ESCRITORIO = [
+  'danielle@quickservice.com.br',
+];
+
+// Verifica se o usuário Google logado tem perfil de Escritório
+function isEscritorio() {
+  if (!googleAuth || !googleAuth.email) return false;
+  return EMAILS_ESCRITORIO
+    .map(e => e.toLowerCase().trim())
+    .includes(googleAuth.email.toLowerCase().trim());
+}
 
 let googleAuth = JSON.parse(localStorage.getItem(GOOGLE_KEY) || 'null');
 let googleTokenClient = null;
