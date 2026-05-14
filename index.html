@@ -5381,12 +5381,10 @@ function decodeJwtPayload(token) {
 // Inicializa o cliente Google quando a biblioteca carregar
 function initGoogleAuth() {
   if (typeof google === 'undefined' || !google.accounts) {
-    // Biblioteca ainda não carregou; tenta de novo em breve
     setTimeout(initGoogleAuth, 500);
     return;
   }
   try {
-    // Cliente pra obter access_token (será usado depois pra Drive API)
     googleTokenClient = google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
       scope: GOOGLE_SCOPES,
@@ -5402,10 +5400,10 @@ function initGoogleAuth() {
       },
       error_callback: (err) => {
         console.error('Erro OAuth:', err);
-        if (err.type === 'popup_closed') {
+        if (err && err.type === 'popup_closed') {
           toast('login cancelado');
         } else {
-          alert('Erro ao conectar com Google: ' + (err.message || err.type || 'desconhecido'));
+          alert('Erro ao conectar (token client): ' + (err.message || err.type || 'desconhecido'));
         }
       },
     });
@@ -5419,49 +5417,89 @@ function initGoogleAuth() {
 // Tenta inicializar quando a biblioteca carregar
 window.addEventListener('load', () => {
   setTimeout(initGoogleAuth, 800);
+  // Verifica se voltamos de um redirect do Google
+  checkOAuthRedirect();
 });
 
-function googleSignIn() {
-  if (!googleReady || !googleTokenClient) {
-    alert('Conexão com Google ainda não está pronta. Aguarde alguns segundos e tente novamente.');
+// MÉTODO ALTERNATIVO DE LOGIN — Redirect direto (sem popup)
+// Funciona melhor em PWA e celulares onde pop-ups são bloqueados
+function googleSignInRedirect() {
+  // Salva flag pra saber que tem redirect pendente quando voltar
+  localStorage.setItem('sirona_oauth_pending', '1');
+
+  const redirectUri = window.location.origin + window.location.pathname;
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: redirectUri,
+    response_type: 'token id_token',
+    scope: 'openid email profile ' + GOOGLE_SCOPES,
+    include_granted_scopes: 'true',
+    state: 'sirona_' + Date.now(),
+    nonce: 'n_' + Math.random().toString(36).slice(2),
+    prompt: 'consent select_account',
+  });
+
+  const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+  console.log('[OAuth] Redirecionando para:', authUrl);
+  window.location.href = authUrl;
+}
+
+// Verifica se voltamos de um redirect OAuth (token vem na URL como hash)
+function checkOAuthRedirect() {
+  const hash = window.location.hash;
+  if (!hash || !hash.includes('access_token=')) return;
+  const pending = localStorage.getItem('sirona_oauth_pending');
+  if (!pending) return; // não estávamos esperando
+
+  console.log('[OAuth] Redirect detectado, processando token...');
+  localStorage.removeItem('sirona_oauth_pending');
+
+  const params = new URLSearchParams(hash.slice(1));
+  const accessToken = params.get('access_token');
+  const idToken = params.get('id_token');
+  const expiresIn = parseInt(params.get('expires_in')) || 3600;
+
+  if (!accessToken) {
+    alert('Não foi possível obter o token. Tente novamente.');
     return;
   }
-  // Primeira coisa: obter info do usuário (nome, email, foto) via One-Tap/Sign-In
-  if (!googleAuth || !googleAuth.email) {
-    // Usa o fluxo de "Sign In With Google" pra pegar dados do usuário
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: (credResponse) => {
-        const userInfo = decodeJwtPayload(credResponse.credential);
-        if (userInfo) {
-          googleAuth = googleAuth || {};
-          googleAuth.email = userInfo.email;
-          googleAuth.name = userInfo.name;
-          googleAuth.picture = userInfo.picture;
-          googleAuth.idToken = credResponse.credential;
-          saveGoogleAuth();
-          renderGoogleSection();
-          // Agora solicita o access_token pro Drive
-          googleTokenClient.requestAccessToken({ prompt: 'consent' });
-        }
-      },
-    });
-    google.accounts.id.prompt((notification) => {
-      // Se One-Tap não funcionar (bloqueado ou indisponível),
-      // pede o access_token direto (sem dados do usuário detalhados)
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        googleTokenClient.requestAccessToken({ prompt: 'consent' });
-      }
-    });
-  } else {
-    // Usuário já tem info, só renova o access_token
-    googleTokenClient.requestAccessToken({ prompt: '' });
+
+  // Decodifica id_token pra pegar dados do usuário
+  let userInfo = null;
+  if (idToken) userInfo = decodeJwtPayload(idToken);
+
+  googleAuth = googleAuth || {};
+  googleAuth.accessToken = accessToken;
+  googleAuth.tokenExpiresAt = Date.now() + (expiresIn * 1000);
+  if (userInfo) {
+    googleAuth.email = userInfo.email;
+    googleAuth.name = userInfo.name;
+    googleAuth.picture = userInfo.picture;
+    googleAuth.idToken = idToken;
+  }
+  saveGoogleAuth();
+
+  // Limpa o hash da URL pra não vazar o token no histórico
+  history.replaceState(null, '', window.location.pathname);
+
+  // Mostra confirmação e navega pra Configurações
+  setTimeout(() => {
+    if (typeof goConfig === 'function') goConfig();
+    if (typeof toast === 'function') toast('conectado com sucesso');
+  }, 300);
+}
+
+function googleSignIn() {
+  // Usa o método de REDIRECT diretamente — é o mais confiável em PWA/celular
+  // (não depende de pop-up que pode ser bloqueado)
+  if (confirm('Você será redirecionado para o Google para fazer login.\n\nApós autorizar, você voltará automaticamente para o app.\n\nContinuar?')) {
+    googleSignInRedirect();
   }
 }
 
 function googleSignOut() {
   if (!confirm('Desconectar do Google? Você precisará fazer login novamente.')) return;
-  if (googleAuth && googleAuth.accessToken && typeof google !== 'undefined') {
+  if (googleAuth && googleAuth.accessToken && typeof google !== 'undefined' && google.accounts) {
     try {
       google.accounts.oauth2.revoke(googleAuth.accessToken, () => {});
     } catch (e) { /* ignora erros de revogação */ }
